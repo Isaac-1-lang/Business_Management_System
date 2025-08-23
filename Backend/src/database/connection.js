@@ -11,6 +11,7 @@
  * - Automatic reconnection
  * - Environment-based configuration
  * - Migration and seeding support
+ * - Cloud database support (Supabase, Neon, Railway, etc.)
  * 
  * RWANDA-SPECIFIC:
  * - Multi-company database structure
@@ -39,14 +40,21 @@ const dbConfig = {
     idle: 10000 // Maximum time (ms) that a connection can be idle before being released
   },
   dialectOptions: {
-    ssl: process.env.NODE_ENV === 'production' ? {
+    // SSL configuration for cloud databases
+    ssl: process.env.DB_SSL === 'true' || process.env.NODE_ENV === 'production' ? {
       require: true,
-      rejectUnauthorized: false
+      rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false'
     } : false,
     // Support for JSON data types
     json: true,
     // Support for array data types
-    array: true
+    array: true,
+    // Connection timeout
+    connectTimeout: 60000,
+    // Statement timeout
+    statement_timeout: 30000,
+    // Query timeout
+    query_timeout: 30000
   },
   define: {
     // Add timestamps to all tables
@@ -57,6 +65,11 @@ const dbConfig = {
     freezeTableName: true,
     // Add paranoid deletion (soft delete)
     paranoid: true
+  },
+  // Retry configuration for cloud databases
+  retry: {
+    max: 3,
+    timeout: 3000
   }
 };
 
@@ -72,7 +85,8 @@ const sequelize = new Sequelize(
     logging: dbConfig.logging,
     pool: dbConfig.pool,
     dialectOptions: dbConfig.dialectOptions,
-    define: dbConfig.define
+    define: dbConfig.define,
+    retry: dbConfig.retry
   }
 );
 
@@ -81,6 +95,7 @@ export async function connectDatabase() {
   try {
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully.');
+    console.log(`📍 Connected to: ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
     
     // Sync database (create tables if they don't exist)
     // In production, use migrations instead of sync
@@ -91,7 +106,9 @@ export async function connectDatabase() {
     
     return sequelize;
   } catch (error) {
-    console.error('❌ Unable to connect to the database:', error);
+    console.error('❌ Unable to connect to the database:', error.message);
+    console.error('🔧 Check your database configuration in .env file');
+    console.error('🌐 For cloud databases, ensure SSL is properly configured');
     throw error;
   }
 }

@@ -11,7 +11,8 @@
     "test": "jest",
     "lint": "eslint src/",
     "migrate": "node src/database/migrate.js",
-    "seed": "node src/database/seed.js"
+    "seed": "node src/database/seed.js",
+    "setup-db": "node setup-cloud-db.js"
   },
   "keywords": [
     "rwanda",
