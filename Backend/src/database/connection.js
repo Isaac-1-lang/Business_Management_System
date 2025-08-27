@@ -28,10 +28,10 @@ dotenv.config();
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'office_nexus_rw',
-  username: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || '',
-  dialect: process.env.DB_DIALECT || 'postgres',
+  database: process.env.DB_NAME,
+  username: process.env.DB_USER ,
+  password: process.env.DB_PASSWORD ,
+  dialect: process.env.DB_DIALECT,
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
   pool: {
     max: 20, // Maximum number of connection instances
