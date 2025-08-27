@@ -122,7 +122,7 @@ npm run lint      # linting
 1. Start PostgreSQL and Redis locally
 2. Start Backend: `cd Backend && npm run dev`
 3. Start Frontend: `cd office-nexus-schema && npm run dev`
-4. Open the app at `http://localhost:5173` (the frontend will talk to `http://localhost:5000`)
+4. Open the app at `http://localhost:5173` (the frontend will talk to `http://localhost:${Backend_Port}`)
 
 ---
 
