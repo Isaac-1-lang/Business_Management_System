@@ -163,48 +163,48 @@ app.use(errorHandler);
 
 async function startServer() {
   try {
-    console.log('🚀 Starting Office Nexus Backend Server...');
+    console.log('Starting Office Nexus Backend Server...');
     
     // Connect to database
     await connectDatabase();
-    console.log('✅ Database connected successfully');
+    console.log('Database connected successfully');
     
     // Connect to Redis
     await connectRedis();
-    console.log('✅ Redis connected successfully');
+    console.log('Redis connected successfully');
     
     // Setup Bull queue for background jobs
     await setupBullQueue();
-    console.log('✅ Background job queue setup successfully');
+    console.log('Background job queue setup successfully');
     
     // Start the server
     server.listen(PORT, () => {
       console.log(`🎉 Server running on port ${PORT}`);
-      console.log(`🌍 Environment: ${NODE_ENV}`);
-      console.log(`🔗 API Base URL: http://localhost:${PORT}${API_PREFIX}`);
-      console.log(`📱 Socket.io ready for real-time connections`);
-      console.log(`📊 Health check: http://localhost:${PORT}/health`);
+      console.log(`Environment: ${NODE_ENV}`);
+      console.log(`API Base URL: http://localhost:${PORT}${API_PREFIX}`);
+      console.log(`Socket.io ready for real-time connections`);
+      console.log(`Health check: http://localhost:${PORT}/health`);
     });
     
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
+    console.error('Failed to start server:', error);
     process.exit(1);
   }
 }
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('🛑 SIGTERM received, shutting down gracefully...');
+  console.log('SIGTERM received, shutting down gracefully...');
   server.close(() => {
-    console.log('✅ Server closed');
+    console.log('Server closed');
     process.exit(0);
   });
 });
 
 process.on('SIGINT', () => {
-  console.log('🛑 SIGINT received, shutting down gracefully...');
+  console.log('SIGINT received, shutting down gracefully...');
   server.close(() => {
-    console.log('✅ Server closed');
+    console.log('Server closed');
     process.exit(0);
   });
 });

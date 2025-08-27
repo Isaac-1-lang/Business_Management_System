@@ -94,21 +94,21 @@ const sequelize = new Sequelize(
 export async function connectDatabase() {
   try {
     await sequelize.authenticate();
-    console.log('✅ Database connection established successfully.');
-    console.log(`📍 Connected to: ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
+    console.log('Database connection established successfully.');
+    console.log(`Connected to: ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
     
     // Sync database (create tables if they don't exist)
     // In production, use migrations instead of sync
     if (process.env.NODE_ENV === 'development') {
       await sequelize.sync({ alter: true });
-      console.log('✅ Database synchronized successfully.');
+      console.log('Database synchronized successfully.');
     }
     
     return sequelize;
   } catch (error) {
-    console.error('❌ Unable to connect to the database:', error.message);
-    console.error('🔧 Check your database configuration in .env file');
-    console.error('🌐 For cloud databases, ensure SSL is properly configured');
+    console.error('Unable to connect to the database:', error.message);
+    console.error('Check your database configuration in .env file');
+    console.error('For cloud databases, ensure SSL is properly configured');
     throw error;
   }
 }
@@ -117,9 +117,9 @@ export async function connectDatabase() {
 export async function closeDatabase() {
   try {
     await sequelize.close();
-    console.log('✅ Database connection closed successfully.');
+    console.log('Database connection closed successfully.');
   } catch (error) {
-    console.error('❌ Error closing database connection:', error);
+    console.error('Error closing database connection:', error);
     throw error;
   }
 }

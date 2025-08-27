@@ -51,40 +51,40 @@ const redisClient = createClient(redisConfig);
 
 // Redis event handlers
 redisClient.on('connect', () => {
-  console.log('✅ Redis client connected');
+  console.log('Redis client connected');
 });
 
 redisClient.on('ready', () => {
-  console.log('✅ Redis client ready');
+  console.log('Redis client ready');
 });
 
 redisClient.on('error', (err) => {
-  console.error('❌ Redis client error:', err);
+  console.error('Redis client error:', err);
 });
 
 redisClient.on('end', () => {
-  console.log('🔄 Redis client disconnected');
+  console.log('Redis client disconnected');
 });
 
 redisClient.on('reconnecting', () => {
-  console.log('🔄 Redis client reconnecting...');
+  console.log('Redis client reconnecting...');
 });
 
 // Connect to Redis
 export async function connectRedis() {
   try {
     await redisClient.connect();
-    console.log('✅ Redis connection established successfully.');
+    console.log('Redis connection established successfully.');
     
     // Test connection with ping
     const pong = await redisClient.ping();
     if (pong === 'PONG') {
-      console.log('✅ Redis ping successful');
+      console.log('Redis ping successful');
     }
     
     return redisClient;
   } catch (error) {
-    console.error('❌ Unable to connect to Redis:', error);
+    console.error('Unable to connect to Redis:', error);
     throw error;
   }
 }
@@ -93,9 +93,9 @@ export async function connectRedis() {
 export async function closeRedis() {
   try {
     await redisClient.quit();
-    console.log('✅ Redis connection closed successfully.');
+    console.log('Redis connection closed successfully.');
   } catch (error) {
-    console.error('❌ Error closing Redis connection:', error);
+    console.error('Error closing Redis connection:', error);
     throw error;
   }
 }
