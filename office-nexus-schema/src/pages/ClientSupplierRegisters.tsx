@@ -10,38 +10,7 @@ import { ClientSupplierForm } from "@/components/forms/ClientSupplierForm";
 
 export default function ClientSupplierRegisters() {
   const [showForm, setShowForm] = useState(false);
-  const [entities] = useState([
-    {
-      id: 1,
-      name: "Kigali Tech Solutions",
-      type: "Client",
-      category: "Company",
-      taxId: "100123456",
-      contact: "info@kigalitech.rw",
-      phone: "+250788123456",
-      status: "Active"
-    },
-    {
-      id: 2,
-      name: "Office Supplies Rwanda Ltd",
-      type: "Supplier",
-      category: "Company",
-      taxId: "100987654",
-      contact: "sales@officesupplies.rw",
-      phone: "+250789987654",
-      status: "Active"
-    },
-    {
-      id: 3,
-      name: "John Uwimana",
-      type: "Supplier",
-      category: "Individual",
-      taxId: "1198012345678901",
-      contact: "john.uwimana@gmail.com",
-      phone: "+250788567890",
-      status: "Active"
-    }
-  ]);
+  const [entities] = useState([]);
 
   const [filterType, setFilterType] = useState("all");
 

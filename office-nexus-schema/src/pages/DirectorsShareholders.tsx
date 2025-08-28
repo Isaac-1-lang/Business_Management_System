@@ -41,40 +41,9 @@ export default function DirectorsShareholders() {
         const parsedDirectors = JSON.parse(stored);
         setDirectors(parsedDirectors);
       } else {
-        const sampleDirectors = [
-          {
-            id: 1,
-            name: "John Uwimana",
-            nationalId: "1198780123456789",
-            role: "Director & Shareholder",
-            nationality: "Rwandan",
-            shares: "4500",
-            joinDate: "2023-01-15",
-            status: "Active"
-          },
-          {
-            id: 2,
-            name: "Marie Mukamana",
-            nationalId: "1198880123456790",
-            role: "Director",
-            nationality: "Rwandan",
-            shares: "3500",
-            joinDate: "2023-01-15",
-            status: "Active"
-          },
-          {
-            id: 3,
-            name: "James Kalisa",
-            nationalId: "1198980123456791",
-            role: "Shareholder",
-            nationality: "Rwandan",
-            shares: "2000",
-            joinDate: "2023-03-01",
-            status: "Active"
-          }
-        ];
-        setDirectors(sampleDirectors);
-        localStorage.setItem('directors-shareholders', JSON.stringify(sampleDirectors));
+        // Initialize with empty array when no data exists
+        setDirectors([]);
+        localStorage.setItem('directors-shareholders', JSON.stringify([]));
       }
     };
 

@@ -45,59 +45,8 @@ class FixedAssetService {
   }
 
   static getDefaultAssets(): FixedAsset[] {
-    const defaultAssets: FixedAsset[] = [
-      {
-        id: 1,
-        name: "Dell Laptop - IT001",
-        category: "Computer Equipment",
-        acquisitionDate: "2023-05-15",
-        acquisitionCost: 850000,
-        depreciationMethod: 'straight_line',
-        usefulLifeYears: 4,
-        residualValue: 0,
-        currentBookValue: 637500,
-        location: "IT Department",
-        supplier: "Dell Rwanda",
-        status: "active",
-        createdAt: "2023-05-15T00:00:00Z",
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 2,
-        name: "Toyota Hiace - Vehicle001",
-        category: "Vehicle",
-        acquisitionDate: "2022-08-20",
-        acquisitionCost: 15000000,
-        depreciationMethod: 'straight_line',
-        usefulLifeYears: 5,
-        residualValue: 3000000,
-        currentBookValue: 9600000,
-        location: "Main Office",
-        supplier: "Toyota Rwanda",
-        status: "active",
-        createdAt: "2022-08-20T00:00:00Z",
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 3,
-        name: "Office Furniture Set",
-        category: "Furniture",
-        acquisitionDate: "2024-01-10",
-        acquisitionCost: 1200000,
-        depreciationMethod: 'straight_line',
-        usefulLifeYears: 10,
-        residualValue: 0,
-        currentBookValue: 1080000,
-        location: "Administration",
-        supplier: "Furniture Plus",
-        status: "active",
-        createdAt: "2024-01-10T00:00:00Z",
-        updatedAt: new Date().toISOString()
-      }
-    ];
-
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(defaultAssets));
-    return defaultAssets;
+    // Return empty array when no data exists
+    return [];
   }
 
   static saveAssets(assets: FixedAsset[]): void {

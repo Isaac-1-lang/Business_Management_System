@@ -14,42 +14,8 @@ export interface AuditLog {
 }
 
 class AuditLogService {
-  private static auditLogs: AuditLog[] = [
-    {
-      id: 'audit-1',
-      action_type: 'create',
-      table_name: 'transactions',
-      record_id: 'TXN-001',
-      changed_by: 'user-1',
-      user_name: 'John Doe',
-      new_data: { amount: 1500000, type: 'sale' },
-      description: 'Created sales transaction',
-      changed_at: '2024-06-15T10:30:00Z'
-    },
-    {
-      id: 'audit-2',
-      action_type: 'update',
-      table_name: 'employees',
-      record_id: 'EMP-001',
-      changed_by: 'user-2',
-      user_name: 'Jane Smith',
-      old_data: { salary: 800000 },
-      new_data: { salary: 850000 },
-      description: 'Updated employee salary',
-      changed_at: '2024-06-14T14:15:00Z'
-    },
-    {
-      id: 'audit-3',
-      action_type: 'delete',
-      table_name: 'invoices',
-      record_id: 'INV-123',
-      changed_by: 'user-1',
-      user_name: 'John Doe',
-      old_data: { amount: 500000, status: 'draft' },
-      description: 'Deleted draft invoice',
-      changed_at: '2024-06-13T09:20:00Z'
-    }
-  ];
+  // Empty array - replace with actual API calls in production
+  private static auditLogs: AuditLog[] = [];
 
   static logAction(action: Omit<AuditLog, 'id' | 'changed_at' | 'changed_by' | 'user_name'>): void {
     const auditEntry: AuditLog = {

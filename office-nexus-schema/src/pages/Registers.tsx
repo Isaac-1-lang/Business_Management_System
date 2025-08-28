@@ -12,15 +12,9 @@ import { ChargesTab } from "@/components/registers/ChargesTab";
 import { BeneficialOwnersTab } from "@/components/registers/BeneficialOwnersTab";
 
 export default function Registers() {
-  const [shareRecords, setShareRecords] = useState([
-    { id: 1, certificateNo: "001", holder: "John Uwimana", shares: 450, date: "2023-01-15" },
-    { id: 2, certificateNo: "002", holder: "Marie Mukamana", shares: 350, date: "2023-01-15" },
-    { id: 3, certificateNo: "003", holder: "James Kalisa", shares: 200, date: "2023-03-01" }
-  ]);
+  const [shareRecords, setShareRecords] = useState([]);
 
-  const [chargeRecords, setChargeRecords] = useState([
-    { id: 1, type: "Bank Loan", amount: "50,000,000 RWF", creditor: "Bank of Kigali", date: "2023-06-15", status: "Active" }
-  ]);
+  const [chargeRecords, setChargeRecords] = useState([]);
 
   const [beneficialOwners, setBeneficialOwners] = useState([]);
 

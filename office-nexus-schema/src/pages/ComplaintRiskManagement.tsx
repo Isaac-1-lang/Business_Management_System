@@ -13,41 +13,7 @@ import ComplaintRiskForm from "@/components/forms/ComplaintRiskForm";
 
 export default function ComplaintRiskManagement() {
   const { toast } = useToast();
-  const [complaints, setComplaints] = useState([
-    {
-      id: 1,
-      title: "Late Payment Complaint",
-      category: "Client Complaint",
-      description: "Client complained about delayed payment processing",
-      reportedDate: "2024-04-15",
-      assignedTo: "Finance Manager",
-      priority: "Medium",
-      status: "In Progress",
-      deadline: "2024-04-30"
-    },
-    {
-      id: 2,
-      title: "Data Security Risk",
-      category: "Risk",
-      description: "Potential vulnerability in employee data access",
-      reportedDate: "2024-04-10",
-      assignedTo: "IT Manager",
-      priority: "High",
-      status: "Open",
-      deadline: "2024-04-25"
-    },
-    {
-      id: 3,
-      title: "Workplace Safety Issue",
-      category: "Compliance Issue",
-      description: "Inadequate safety equipment in warehouse",
-      reportedDate: "2024-03-28",
-      assignedTo: "HR Manager",
-      priority: "High",
-      status: "Resolved",
-      deadline: "2024-04-15"
-    }
-  ]);
+  const [complaints, setComplaints] = useState([]);
 
   const [filterCategory, setFilterCategory] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");

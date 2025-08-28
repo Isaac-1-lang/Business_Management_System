@@ -11,38 +11,7 @@ import { ContractForm } from "@/components/forms/ContractForm";
 
 export default function ContractsAgreements() {
   const [showForm, setShowForm] = useState(false);
-  const [contracts, setContracts] = useState([
-    {
-      id: 1,
-      title: "Office Lease Agreement",
-      type: "Lease",
-      parties: "ABC Property Ltd & Our Company",
-      startDate: "2024-01-01",
-      endDate: "2025-12-31",
-      status: "Active",
-      value: 9600000
-    },
-    {
-      id: 2,
-      title: "IT Services Contract",
-      type: "Supplier",
-      parties: "TechCorp Solutions & Our Company",
-      startDate: "2023-06-01",
-      endDate: "2024-05-31",
-      status: "Expiring Soon",
-      value: 2400000
-    },
-    {
-      id: 3,
-      title: "Consulting Agreement",
-      type: "Consultant",
-      parties: "John Doe Consulting & Our Company",
-      startDate: "2024-03-01",
-      endDate: "2024-08-31",
-      status: "Active",
-      value: 1800000
-    }
-  ]);
+  const [contracts, setContracts] = useState([]);
 
   const [filterType, setFilterType] = useState("all");
 

@@ -27,12 +27,7 @@ export default function CompanyProfile() {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [companyData, setCompanyData] = useState<CompanyProfileData | null>(null);
-  const [documents, setDocuments] = useState([
-    { id: 1, name: "RDB_Certificate_2023.pdf", size: "2.4 MB", uploadDate: "2023-12-15", type: "certificate" },
-    { id: 2, name: "Tax_Clearance_2024.pdf", size: "1.8 MB", uploadDate: "2024-01-20", type: "tax" },
-    { id: 3, name: "VAT_Registration.pdf", size: "1.2 MB", uploadDate: "2023-11-10", type: "vat" },
-    { id: 4, name: "Business_License.pdf", size: "3.1 MB", uploadDate: "2023-10-05", type: "license" }
-  ]);
+  const [documents, setDocuments] = useState([]);
 
   useEffect(() => {
     loadCompanyData();

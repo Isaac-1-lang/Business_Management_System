@@ -22,44 +22,7 @@ import {
 
 export default function InternalAuditReports() {
   const { toast } = useToast();
-  const [reports, setReports] = useState([
-    {
-      id: 1,
-      title: "Financial Audit Q4 2023",
-      auditType: "Financial",
-      auditor: "PwC Rwanda",
-      auditedPeriod: "Oct-Dec 2023",
-      reportDate: "2024-02-15",
-      status: "Completed",
-      findings: 3,
-      description: "Comprehensive financial audit covering revenue recognition and expense management",
-      recommendations: "Implement automated reconciliation processes"
-    },
-    {
-      id: 2,
-      title: "IT Systems Compliance Review",
-      auditType: "IT",
-      auditor: "Internal Audit Team",
-      auditedPeriod: "Jan-Mar 2024",
-      reportDate: "2024-04-10",
-      status: "In Progress",
-      findings: 0,
-      description: "Security assessment and compliance review of IT infrastructure",
-      recommendations: "Pending completion"
-    },
-    {
-      id: 3,
-      title: "HR Compliance Audit",
-      auditType: "Compliance",
-      auditor: "Deloitte Rwanda",
-      auditedPeriod: "Jan-Jun 2024",
-      reportDate: "",
-      status: "Scheduled",
-      findings: 0,
-      description: "Review of HR policies and procedures compliance",
-      recommendations: "To be determined"
-    }
-  ]);
+  const [reports, setReports] = useState([]);
 
   const [filterType, setFilterType] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");

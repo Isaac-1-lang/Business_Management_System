@@ -10,56 +10,7 @@ import { EmployeeForm } from "@/components/forms/EmployeeForm";
 
 export default function EmployeeRecords() {
   const [showForm, setShowForm] = useState(false);
-  const [employees] = useState([
-    {
-      id: 1,
-      name: "Jean Claude Mugabo",
-      nationalId: "1198780123456789",
-      role: "Software Developer",
-      department: "IT",
-      salary: 2500000,
-      startDate: "2022-03-15",
-      rssb: "RS123456789",
-      status: "Active",
-      contract: "contract_mugabo.pdf"
-    },
-    {
-      id: 2,
-      name: "Marie Uwimana",
-      nationalId: "1199185098765432",
-      role: "Accountant",
-      department: "Finance",
-      salary: 1800000,
-      startDate: "2021-08-20",
-      rssb: "RS987654321",
-      status: "Active",
-      contract: "contract_uwimana.pdf"
-    },
-    {
-      id: 3,
-      name: "Paul Nkurunziza",
-      nationalId: "1197512345678901",
-      role: "HR Manager",
-      department: "Human Resources",
-      salary: 2200000,
-      startDate: "2020-01-10",
-      rssb: "RS456789123",
-      status: "Active",
-      contract: "contract_nkurunziza.pdf"
-    },
-    {
-      id: 4,
-      name: "Grace Mukamana",
-      nationalId: "1198456789012345",
-      role: "Marketing Specialist",
-      department: "Marketing",
-      salary: 1500000,
-      startDate: "2023-06-01",
-      rssb: "RS789123456",
-      status: "Terminated",
-      contract: "contract_mukamana.pdf"
-    }
-  ]);
+  const [employees] = useState([]);
 
   const [filterStatus, setFilterStatus] = useState("all");
 

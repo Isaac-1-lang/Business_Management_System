@@ -20,16 +20,16 @@ export default function ReportsAudit() {
   // Get tax summary including QIT
   const taxSummary = TaxService.getTaxSummary();
 
-  // Sample data for dashboard widgets with enhanced tax data
+  // Dashboard data - replace with actual data from API
   const dashboardData = {
-    totalRevenue: 45000000,
-    totalExpenses: 32000000,
-    profit: 13000000,
-    activeEmployees: 25,
-    payrollCost: 18500000,
-    unpaidInvoices: 8,
-    upcomingDeadlines: 3,
-    complianceStatus: "good",
+    totalRevenue: 0,
+    totalExpenses: 0,
+    profit: 0,
+    activeEmployees: 0,
+    payrollCost: 0,
+    unpaidInvoices: 0,
+    upcomingDeadlines: 0,
+    complianceStatus: "unknown",
     // Enhanced tax obligations
     vatDue: taxSummary.vat_due,
     payeDue: taxSummary.paye_due,
@@ -38,29 +38,11 @@ export default function ReportsAudit() {
     totalTaxObligations: taxSummary.vat_due + taxSummary.paye_due + taxSummary.cit_due + taxSummary.qit_due
   };
 
-  const revenueData = [
-    { month: "Jan", revenue: 3500000, expenses: 2800000 },
-    { month: "Feb", revenue: 4200000, expenses: 3100000 },
-    { month: "Mar", revenue: 3800000, expenses: 2900000 },
-    { month: "Apr", revenue: 4500000, expenses: 3200000 },
-    { month: "May", revenue: 4100000, expenses: 3000000 },
-    { month: "Jun", revenue: 4800000, expenses: 3400000 }
-  ];
+  const revenueData = [];
 
-  const expenseCategories = [
-    { name: "Salaries", value: 18500000, color: "#8884d8" },
-    { name: "Rent", value: 4800000, color: "#82ca9d" },
-    { name: "Utilities", value: 2400000, color: "#ffc658" },
-    { name: "Marketing", value: 3600000, color: "#ff7300" },
-    { name: "Other", value: 2700000, color: "#8dd1e1" }
-  ];
+  const expenseCategories = [];
 
-  const upcomingDeadlines = [
-    { task: "VAT Return Filing", dueDate: taxSummary.next_filing_dates.vat, priority: "high", department: "Finance" },
-    { task: "PAYE Returns", dueDate: taxSummary.next_filing_dates.paye, priority: "medium", department: "HR" },
-    { task: "QIT Payment", dueDate: taxSummary.next_filing_dates.qit, priority: "high", department: "Finance" },
-    { task: "Annual CIT Filing", dueDate: taxSummary.next_filing_dates.cit, priority: "medium", department: "Finance" }
-  ];
+  const upcomingDeadlines = [];
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">

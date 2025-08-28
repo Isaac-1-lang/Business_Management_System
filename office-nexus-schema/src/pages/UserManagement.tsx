@@ -10,58 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function UserManagement() {
   const { toast } = useToast();
-  const [users] = useState([
-    {
-      id: 1,
-      name: "John Admin",
-      email: "admin@company.com",
-      role: "Administrator",
-      department: "IT",
-      status: "Active",
-      lastLogin: "2024-07-12 14:30",
-      permissions: ["Full Access"]
-    },
-    {
-      id: 2,
-      name: "Jane Accountant",
-      email: "jane@company.com",
-      role: "Accountant",
-      department: "Finance",
-      status: "Active",
-      lastLogin: "2024-07-12 09:15",
-      permissions: ["Finance", "Reports"]
-    },
-    {
-      id: 3,
-      name: "Bob HR",
-      email: "bob@company.com",
-      role: "HR Officer",
-      department: "Human Resources",
-      status: "Active",
-      lastLogin: "2024-07-11 16:45",
-      permissions: ["HR", "Employees"]
-    },
-    {
-      id: 4,
-      name: "Alice Compliance",
-      email: "alice@company.com",
-      role: "Compliance Officer",
-      department: "Legal",
-      status: "Inactive",
-      lastLogin: "2024-07-08 11:20",
-      permissions: ["Compliance", "Documents"]
-    },
-    {
-      id: 5,
-      name: "Mike Viewer",
-      email: "mike@company.com",
-      role: "Viewer",
-      department: "Operations",
-      status: "Active",
-      lastLogin: "2024-07-12 08:00",
-      permissions: ["Read Only"]
-    }
-  ]);
+  const [users] = useState([]);
 
   const getRoleColor = (role: string) => {
     switch (role.toLowerCase()) {

@@ -28,10 +28,10 @@ dotenv.config();
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME,
-  username: process.env.DB_USER ,
-  password: process.env.DB_PASSWORD ,
-  dialect: process.env.DB_DIALECT,
+  database: process.env.DB_NAME || 'postgres',
+  username: process.env.DB_USER || 'postgres',
+  password: process.env.DB_PASSWORD || '',
+  dialect: process.env.DB_DIALECT || 'postgres',
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
   pool: {
     max: 20, // Maximum number of connection instances
@@ -40,21 +40,11 @@ const dbConfig = {
     idle: 10000 // Maximum time (ms) that a connection can be idle before being released
   },
   dialectOptions: {
-    // SSL configuration for cloud databases
-    ssl: process.env.DB_SSL === 'true' || process.env.NODE_ENV === 'production' ? {
+    ssl: {
       require: true,
-      rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false'
-    } : false,
-    // Support for JSON data types
-    json: true,
-    // Support for array data types
-    array: true,
-    // Connection timeout
+      rejectUnauthorized: false, // allow Neon’s SSL cert
+    },
     connectTimeout: 60000,
-    // Statement timeout
-    statement_timeout: 30000,
-    // Query timeout
-    query_timeout: 30000
   },
   define: {
     // Add timestamps to all tables

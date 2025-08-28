@@ -79,67 +79,17 @@ export interface UserCompanyRole {
  * Uses static methods for easy access throughout the application
  */
 class CompanyService {
-  // Mock company data - replace with actual API calls in production
-  private static companies: Company[] = [
-    {
-      id: 'comp-001',
-      name: 'Main Company Ltd',
-      tin: '123456789',
-      registration_number: 'REG001',
-      address: 'KG 123 St, Kigali',
-      phone: '+250788123456',
-      email: 'info@maincompany.rw',
-      currency: 'RWF',
-      fiscal_year_start: '01-01',
-      tax_regime: 'Standard',
-      status: 'active',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
-    {
-      id: 'comp-002',
-      name: 'Second Business SARL',
-      tin: '987654321',
-      registration_number: 'REG002',
-      address: 'KG 456 St, Kigali',
-      phone: '+250788654321',
-      email: 'contact@secondbiz.rw',
-      currency: 'RWF',
-      fiscal_year_start: '01-01',
-      tax_regime: 'Standard',
-      status: 'active',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-  ];
-
-  // Mock user-company role data - defines user permissions per company
-  private static userCompanyRoles: UserCompanyRole[] = [
-    {
-      id: 'ucr-001',
-      user_id: 'user-001',
-      company_id: 'comp-001',
-      role: 'Owner',
-      granted_at: new Date().toISOString(),
-      granted_by: 'system'
-    },
-    {
-      id: 'ucr-002',
-      user_id: 'user-001',
-      company_id: 'comp-002',
-      role: 'Accountant',
-      granted_at: new Date().toISOString(),
-      granted_by: 'system'
-    }
-  ];
+  // Empty arrays - replace with actual API calls in production
+  private static companies: Company[] = [];
+  private static userCompanyRoles: UserCompanyRole[] = [];
 
   /**
    * Get the currently selected company ID from local storage
-   * Falls back to 'comp-001' if no company is selected
+   * Falls back to empty string if no company is selected
    * @returns string - Current company ID
    */
   static getCurrentCompanyId(): string {
-    return localStorage.getItem('selectedCompanyId') || 'comp-001';
+    return localStorage.getItem('selectedCompanyId') || '';
   }
 
   /**

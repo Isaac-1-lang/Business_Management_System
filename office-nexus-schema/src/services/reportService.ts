@@ -34,13 +34,13 @@ class ReportService {
   }
 
   static async generatePayrollReport(): Promise<ReportData> {
-    // Mock payroll data - in real app this would come from payroll service
+    // Empty payroll data - replace with actual API calls
     const payrollData = {
-      totalEmployees: 25,
-      totalGrossSalary: 18500000,
-      totalPayeTax: 2220000,
-      totalRssbContributions: 1295000,
-      totalNetPay: 14985000,
+      totalEmployees: 0,
+      totalGrossSalary: 0,
+      totalPayeTax: 0,
+      totalRssbContributions: 0,
+      totalNetPay: 0,
       period: new Date().toLocaleDateString('en-RW', { year: 'numeric', month: 'long' })
     };
 
@@ -71,14 +71,14 @@ class ReportService {
   }
 
   static async generateComplianceStatus(): Promise<ReportData> {
-    // Mock compliance data
+    // Empty compliance data - replace with actual API calls
     const complianceData = {
-      totalRegisters: 8,
-      upToDateRegisters: 7,
-      pendingUpdates: 1,
-      licensesExpiring: 2,
-      upcomingDeadlines: 3,
-      complianceScore: 87.5
+      totalRegisters: 0,
+      upToDateRegisters: 0,
+      pendingUpdates: 0,
+      licensesExpiring: 0,
+      upcomingDeadlines: 0,
+      complianceScore: 0
     };
 
     return {
@@ -89,12 +89,13 @@ class ReportService {
   }
 
   static async generateAuditTrail(): Promise<ReportData> {
+    // Empty audit data - replace with actual API calls
     const auditData = {
-      totalTransactions: 156,
-      lastAuditDate: '2024-06-15',
-      flaggedTransactions: 3,
-      systemChanges: 12,
-      userActivities: 89
+      totalTransactions: 0,
+      lastAuditDate: '',
+      flaggedTransactions: 0,
+      systemChanges: 0,
+      userActivities: 0
     };
 
     return {
@@ -105,12 +106,13 @@ class ReportService {
   }
 
   static async generatePerformanceDashboard(): Promise<ReportData> {
+    // Empty performance data - replace with actual API calls
     const performanceData = {
-      monthlyGrowth: 12.3,
-      customerSatisfaction: 94.2,
-      operationalEfficiency: 88.7,
-      profitMargin: 28.9,
-      employeeProductivity: 91.5
+      monthlyGrowth: 0,
+      customerSatisfaction: 0,
+      operationalEfficiency: 0,
+      profitMargin: 0,
+      employeeProductivity: 0
     };
 
     return {

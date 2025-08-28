@@ -41,62 +41,8 @@ export interface PayrollSummary {
 }
 
 class PayrollService {
-  // Mock employee data - in real system this would come from database
-  private static employees: Employee[] = [
-    {
-      id: 1,
-      fullName: "John Uwimana",
-      nationalId: "1199580012345671",
-      email: "john@company.com",
-      phone: "+250788123456",
-      position: "Software Engineer",
-      department: "IT",
-      startDate: "2023-01-15",
-      grossSalary: 2500000,
-      rssbNumber: "RSB001234567",
-      status: "active"
-    },
-    {
-      id: 2,
-      fullName: "Marie Mukamana",
-      nationalId: "1199585012345672",
-      email: "marie@company.com",
-      phone: "+250788123457",
-      position: "Accountant",
-      department: "Finance",
-      startDate: "2023-02-01",
-      grossSalary: 2200000,
-      rssbNumber: "RSB001234568",
-      status: "active"
-    },
-    {
-      id: 3,
-      fullName: "James Kalisa",
-      nationalId: "1199590012345673",
-      email: "james@company.com",
-      phone: "+250788123458",
-      position: "HR Officer",
-      department: "Human Resources",
-      startDate: "2023-03-01",
-      grossSalary: 2000000,
-      rssbNumber: "RSB001234569",
-      status: "active"
-    },
-    {
-      id: 4,
-      fullName: "Alice Niyonzima",
-      nationalId: "1199595012345674",
-      email: "alice@company.com",
-      phone: "+250788123459",
-      position: "Marketing Manager",
-      department: "Marketing",
-      startDate: "2023-04-01",
-      grossSalary: 2300000,
-      rssbNumber: "RSB001234570",
-      status: "active"
-    }
-  ];
-
+  // Empty array - replace with actual API calls in production
+  private static employees: Employee[] = [];
   private static payrollRecords: PayrollRecord[] = [];
 
   // Get all active employees

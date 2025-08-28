@@ -67,47 +67,8 @@ export interface TaxSummary {
 }
 
 class TaxService {
-  // Mock QIT data - in real system this would come from database
-  private static qitPayments: QITReturn[] = [
-    {
-      quarter: 'Q1',
-      year: '2024',
-      estimated_income: 7500000,
-      tax_rate: 30,
-      tax_amount: 2250000,
-      paid: true,
-      paid_date: '2024-03-30',
-      rra_proof_file: 'qit_q1_2024_receipt.pdf',
-      due_date: '2024-03-31'
-    },
-    {
-      quarter: 'Q2',
-      year: '2024',
-      estimated_income: 8200000,
-      tax_rate: 30,
-      tax_amount: 2460000,
-      paid: false,
-      due_date: '2024-06-30'
-    },
-    {
-      quarter: 'Q3',
-      year: '2024',
-      estimated_income: 0,
-      tax_rate: 30,
-      tax_amount: 0,
-      paid: false,
-      due_date: '2024-09-30'
-    },
-    {
-      quarter: 'Q4',
-      year: '2024',
-      estimated_income: 0,
-      tax_rate: 30,
-      tax_amount: 0,
-      paid: false,
-      due_date: '2024-12-31'
-    }
-  ];
+  // Empty array - replace with actual API calls in production
+  private static qitPayments: QITReturn[] = [];
 
   // VAT Return Generation
   static generateVATReturn(month: string): VATReturn {

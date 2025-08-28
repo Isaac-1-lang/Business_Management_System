@@ -21,26 +21,8 @@ export interface BusinessPlan {
 }
 
 class BusinessPlanService {
-  private static businessPlans: BusinessPlan[] = [
-    {
-      id: 'bp-001',
-      title: '2024 Strategic Business Plan',
-      year: 2024,
-      description: 'Comprehensive business plan for 2024 expansion',
-      strategic_goals: 'Expand market presence by 30%, Launch 2 new product lines, Increase revenue by 25%',
-      mission_statement: 'To provide exceptional compliance and business management solutions',
-      vision_statement: 'To become Rwanda\'s leading business compliance platform',
-      swot_analysis: 'Strengths: Strong local knowledge, Experienced team\nWeaknesses: Limited marketing budget\nOpportunities: Growing SME sector\nThreats: Competition from international firms',
-      financial_projections: 'Year 1: 50M RWF revenue target\nYear 2: 75M RWF revenue target\nYear 3: 100M RWF revenue target',
-      market_analysis: 'Target market: SMEs and mid-size companies in Rwanda',
-      competitive_analysis: 'Main competitors: Local accounting firms, International consulting companies',
-      uploaded_by: 'John Doe',
-      created_at: '2024-01-15T10:00:00Z',
-      updated_at: '2024-06-15T14:30:00Z',
-      version: 2,
-      status: 'active'
-    }
-  ];
+  // Empty array - replace with actual API calls in production
+  private static businessPlans: BusinessPlan[] = [];
 
   static getAllBusinessPlans(): BusinessPlan[] {
     return [...this.businessPlans].sort((a, b) => b.year - a.year);
