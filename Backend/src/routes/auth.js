@@ -24,6 +24,7 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from '../models/User.js';
 import { Company } from '../models/Company.js';
+import sequelize from '../database/connection.js';
 import { generateToken, generateRefreshToken, verifyToken, logout } from '../middleware/auth.js';
 import { successResponse, errorResponse, asyncHandler } from '../middleware/errorHandler.js';
 import { RedisService } from '../database/redis.js';
