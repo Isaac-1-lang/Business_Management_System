@@ -26,8 +26,23 @@
  */
 
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
+import { useAuth } from "../contexts/AuthContext";
+import { Button } from "./ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { LogOut, User, Settings, Building } from "lucide-react";
 
 export function DashboardHeader() {
+  const { user, selectedCompany, logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+  };
+
+  const getUserInitials = (firstName: string, lastName: string) => {
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  };
+
   return (
     <div className="flex-1 flex items-center justify-between">
       {/* Left side - Page title and description */}
@@ -35,20 +50,69 @@ export function DashboardHeader() {
         {/* Main page title - Large, bold text */}
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
         {/* Subtitle - Smaller, muted text for context */}
-        <p className="text-gray-600">Welcome back! Here's what's happening with your business.</p>
+        <p className="text-gray-600">
+          Welcome back, {user?.firstName}! Here's what's happening with your business.
+        </p>
+        {selectedCompany && (
+          <p className="text-sm text-gray-500 mt-1">
+            Company: {selectedCompany.name}
+          </p>
+        )}
       </div>
       
       {/* Right side - Actions and notifications */}
       <div className="flex items-center gap-4">
         {/* Notification center for alerts and messages */}
         <NotificationCenter />
-        {/* 
-          You can add more header elements here:
-          - Search bar
-          - User profile dropdown
-          - Action buttons
-          - Breadcrumb navigation
-        */}
+        
+        {/* User Profile Dropdown */}
+        {user && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src="" alt={user.firstName} />
+                  <AvatarFallback>
+                    {getUserInitials(user.firstName, user.lastName)}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">
+                    {user.firstName} {user.lastName}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user.email}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground capitalize">
+                    {user.role}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Building className="mr-2 h-4 w-4" />
+                <span>Companies</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </div>
   );

@@ -28,9 +28,10 @@
  */
 
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster"
 import { DataSyncNotification } from "@/components/DataSyncNotification"
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // Import all page components
 // These are the main views of the application
@@ -62,72 +63,212 @@ import Help from './pages/Help';
 import NotFound from './pages/NotFound';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import CapitalEquity from "./pages/CapitalEquity";
+import { Auth } from './pages/Auth';
 
 // Initialize React Query client for data fetching and caching
 // This enables efficient API calls and state management
 const queryClient = new QueryClient();
 
+// Protected Route Component
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+// Main App Routes Component
+function AppRoutes() {
+  const { isAuthenticated } = useAuth();
+
+  return (
+    <div className="min-h-screen bg-background font-sans antialiased">
+      {/* Global toast notifications */}
+      <Toaster />
+      {/* Data synchronization status indicator */}
+      <DataSyncNotification />
+      
+      {/* Define all application routes */}
+      <Routes>
+        {/* Authentication */}
+        <Route path="/auth" element={<Auth />} />
+        
+        {/* Protected Routes */}
+        <Route path="/" element={
+          <ProtectedRoute>
+            <Index />
+          </ProtectedRoute>
+        } />
+        
+        {/* Company Management Section */}
+        <Route path="/company-profile" element={
+          <ProtectedRoute>
+            <CompanyProfile />
+          </ProtectedRoute>
+        } />
+        <Route path="/directors-shareholders" element={
+          <ProtectedRoute>
+            <DirectorsShareholders />
+          </ProtectedRoute>
+        } />
+        <Route path="/capital-equity" element={
+          <ProtectedRoute>
+            <CapitalEquity />
+          </ProtectedRoute>
+        } />
+        
+        {/* HR & Employee Management */}
+        <Route path="/employee-records" element={
+          <ProtectedRoute>
+            <EmployeeRecords />
+          </ProtectedRoute>
+        } />
+        <Route path="/payroll-hr" element={
+          <ProtectedRoute>
+            <PayrollHR />
+          </ProtectedRoute>
+        } />
+        
+        {/* Financial & Accounting */}
+        <Route path="/invoices-receipts" element={
+          <ProtectedRoute>
+            <InvoicesReceipts />
+          </ProtectedRoute>
+        } />
+        <Route path="/accounting-books" element={
+          <ProtectedRoute>
+            <AccountingBooks />
+          </ProtectedRoute>
+        } />
+        <Route path="/general-ledger" element={
+          <ProtectedRoute>
+            <GeneralLedger />
+          </ProtectedRoute>
+        } />
+        <Route path="/trial-balance" element={
+          <ProtectedRoute>
+            <TrialBalance />
+          </ProtectedRoute>
+        } />
+        <Route path="/fixed-assets" element={
+          <ProtectedRoute>
+            <FixedAssets />
+          </ProtectedRoute>
+        } />
+        
+        {/* Business Operations */}
+        <Route path="/client-supplier-registers" element={
+          <ProtectedRoute>
+            <ClientSupplierRegisters />
+          </ProtectedRoute>
+        } />
+        <Route path="/contracts-agreements" element={
+          <ProtectedRoute>
+            <ContractsAgreements />
+          </ProtectedRoute>
+        } />
+        <Route path="/meeting-minutes" element={
+          <ProtectedRoute>
+            <MeetingMinutes />
+          </ProtectedRoute>
+        } />
+        <Route path="/document-vault" element={
+          <ProtectedRoute>
+            <DocumentVault />
+          </ProtectedRoute>
+        } />
+        
+        {/* Compliance & Legal */}
+        <Route path="/tax-returns" element={
+          <ProtectedRoute>
+            <TaxReturns />
+          </ProtectedRoute>
+        } />
+        <Route path="/compliance-calendar" element={
+          <ProtectedRoute>
+            <ComplianceCalendar />
+          </ProtectedRoute>
+        } />
+        <Route path="/compliance-alerts" element={
+          <ProtectedRoute>
+            <ComplianceAlerts />
+          </ProtectedRoute>
+        } />
+        <Route path="/reports-audit" element={
+          <ProtectedRoute>
+            <ReportsAudit />
+          </ProtectedRoute>
+        } />
+        <Route path="/internal-audit-reports" element={
+          <ProtectedRoute>
+            <InternalAuditReports />
+          </ProtectedRoute>
+        } />
+        
+        {/* Strategic Planning */}
+        <Route path="/business-plan" element={
+          <ProtectedRoute>
+            <BusinessPlan />
+          </ProtectedRoute>
+        } />
+        <Route path="/complaint-risk-management" element={
+          <ProtectedRoute>
+            <ComplaintRiskManagement />
+          </ProtectedRoute>
+        } />
+        
+        {/* System & Administration */}
+        <Route path="/registers" element={
+          <ProtectedRoute>
+            <Registers />
+          </ProtectedRoute>
+        } />
+        <Route path="/user-management" element={
+          <ProtectedRoute>
+            <UserManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/settings" element={
+          <ProtectedRoute>
+            <Settings />
+          </ProtectedRoute>
+        } />
+        <Route path="/help" element={
+          <ProtectedRoute>
+            <Help />
+          </ProtectedRoute>
+        } />
+        
+        {/* 404 page for unmatched routes */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </div>
+  );
+}
+
 function App() {
   return (
-    // Wrap the entire app with React Query provider for data management
+    // Wrap the entire app with providers
     <QueryClientProvider client={queryClient}>
-      {/* Set up React Router for navigation between pages */}
-      <Router>
-        <div className="min-h-screen bg-background font-sans antialiased">
-          {/* Global toast notifications */}
-          <Toaster />
-          {/* Data synchronization status indicator */}
-          <DataSyncNotification />
-          
-          {/* Define all application routes */}
-          <Routes>
-            {/* Dashboard/Home page */}
-            <Route path="/" element={<Index />} />
-            
-            {/* Company Management Section */}
-            <Route path="/company-profile" element={<CompanyProfile />} />
-            <Route path="/directors-shareholders" element={<DirectorsShareholders />} />
-            <Route path="/capital-equity" element={<CapitalEquity />} />
-            
-            {/* HR & Employee Management */}
-            <Route path="/employee-records" element={<EmployeeRecords />} />
-            <Route path="/payroll-hr" element={<PayrollHR />} />
-            
-            {/* Financial & Accounting */}
-            <Route path="/invoices-receipts" element={<InvoicesReceipts />} />
-            <Route path="/accounting-books" element={<AccountingBooks />} />
-            <Route path="/general-ledger" element={<GeneralLedger />} />
-            <Route path="/trial-balance" element={<TrialBalance />} />
-            <Route path="/fixed-assets" element={<FixedAssets />} />
-            
-            {/* Business Operations */}
-            <Route path="/client-supplier-registers" element={<ClientSupplierRegisters />} />
-            <Route path="/contracts-agreements" element={<ContractsAgreements />} />
-            <Route path="/meeting-minutes" element={<MeetingMinutes />} />
-            <Route path="/document-vault" element={<DocumentVault />} />
-            
-            {/* Compliance & Legal */}
-            <Route path="/tax-returns" element={<TaxReturns />} />
-            <Route path="/compliance-calendar" element={<ComplianceCalendar />} />
-            <Route path="/compliance-alerts" element={<ComplianceAlerts />} />
-            <Route path="/reports-audit" element={<ReportsAudit />} />
-            <Route path="/internal-audit-reports" element={<InternalAuditReports />} />
-            
-            {/* Strategic Planning */}
-            <Route path="/business-plan" element={<BusinessPlan />} />
-            <Route path="/complaint-risk-management" element={<ComplaintRiskManagement />} />
-            
-            {/* System & Administration */}
-            <Route path="/registers" element={<Registers />} />
-            <Route path="/user-management" element={<UserManagement />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/help" element={<Help />} />
-            
-            {/* 404 page for unmatched routes */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </div>
-      </Router>
+      <AuthProvider>
+        <Router>
+          <AppRoutes />
+        </Router>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
