@@ -13,7 +13,7 @@ A comprehensive backend API for Rwanda business management system with authentic
 - 🔔 **Notifications**: Real-time notifications and alerts
 - 📈 **Reports**: Comprehensive reporting and analytics
 - 🔄 **Real-time**: Socket.io for live updates
-- ⚡ **Background Jobs**: Bull queue for async processing
+- ⚡ **Background Jobs**: (temporarily disabled)
 
 ## Quick Start
 
@@ -21,7 +21,7 @@ A comprehensive backend API for Rwanda business management system with authentic
 
 - Node.js 18+ 
 - PostgreSQL database
-- Redis (optional, for caching and queues)
+- Redis (disabled)
 
 ### Installation
 
@@ -159,9 +159,7 @@ DB_PASSWORD=password123
 JWT_SECRET=your_secret_key
 JWT_EXPIRES_IN=7d
 
-# Redis (optional)
-REDIS_HOST=localhost
-REDIS_PORT=6379
+# (Redis disabled)
 ```
 
 ## Architecture

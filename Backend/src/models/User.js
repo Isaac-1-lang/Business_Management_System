@@ -127,7 +127,8 @@ User.init({
   isActive: {
     type: DataTypes.BOOLEAN,
     allowNull: false,
-    defaultValue: true
+    defaultValue: true,
+    field: 'is_active'
   },
   
   isEmailVerified: {
@@ -279,10 +280,10 @@ User.init({
       fields: ['role']
     },
     {
-      fields: ['isActive']
+      fields: ['is_active']
     },
     {
-      fields: ['createdAt']
+      fields: ['created_at']
     }
   ],
   
@@ -350,10 +351,10 @@ User.prototype.getPublicProfile = function() {
     phone: this.phone,
     role: this.role,
     avatar: this.avatar,
-    isActive: this.isActive,
+    isActive: this.is_active,
     isEmailVerified: this.isEmailVerified,
     lastLoginAt: this.lastLoginAt,
-    createdAt: this.createdAt
+    createdAt: this.created_at
   };
 };
 

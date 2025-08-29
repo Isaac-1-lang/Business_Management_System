@@ -28,14 +28,14 @@ import morgan from 'morgan';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
-
+import { neon } from '@neondatabase/serverless';
 // Import middleware and utilities
 import { errorHandler } from './middleware/errorHandler.js';
 import { authMiddleware } from './middleware/auth.js';
 import { connectDatabase } from './database/connection.js';
-import { connectRedis } from './database/redis.js';
+// Redis disabled for now
 import { setupSocketIO } from './socket/socketServer.js';
-import { setupBullQueue } from './queue/bullQueue.js';
+// Bull queue disabled for now
 
 // Import route modules
 import authRoutes from './routes/auth.js';
@@ -53,6 +53,13 @@ dotenv.config();
 
 const app = express();
 const server = createServer(app);
+const sql = neon(process.env.DATABASE_URL);
+const requestHandler = async (req,res)=> {
+  const result = await sql`SELECT version()`;
+  const { version } = result[0];
+  res.writeHead(200,{'Content-Type':'text/html'})
+  res.end(version);
+}
 const io = new Server(server, {
   cors: {
     origin: process.env.FRONTEND_URL || "http://localhost:8080",
@@ -172,17 +179,11 @@ async function startServer() {
     await connectDatabase();
     console.log('Database connected successfully');
     
-    // Connect to Redis
-    await connectRedis();
-    console.log('Redis connected successfully');
-    
-    // Setup Bull queue for background jobs
-    await setupBullQueue();
-    console.log('Background job queue setup successfully');
+    // Redis and background queue disabled
     
     // Start the server
     server.listen(PORT, () => {
-      console.log(`🎉 Server running on port ${PORT}`);
+      console.log(`Server running on port ${PORT}`);
       console.log(`Environment: ${NODE_ENV}`);
       console.log(`API Base URL: http://localhost:${PORT}${API_PREFIX}`);
       console.log(`Socket.io ready for real-time connections`);

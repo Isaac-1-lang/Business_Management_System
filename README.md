@@ -8,7 +8,7 @@ A modern, end‑to‑end platform for Rwandan businesses covering company manage
 
 ```
 Dashboard/
-├── Backend/                 # Node.js/Express API, PostgreSQL, Redis, JWT auth
+├── Backend/                 # Node.js/Express API, PostgreSQL, JWT auth
 └── office-nexus-schema/     # React + TypeScript + Vite frontend (Tailwind + shadcn/ui)
 ```
 
@@ -23,7 +23,7 @@ Dashboard/
 - Node.js 18+
 - npm (or bun/yarn)
 - PostgreSQL 12+
-- Redis 6+
+ 
 
 ### 1) Clone
 ```bash
@@ -68,8 +68,7 @@ DB_NAME=office_nexus_rw
 DB_USER=postgres
 DB_PASSWORD=your_password
 
-REDIS_HOST=localhost
-REDIS_PORT=6379
+ 
 
 JWT_SECRET=your_super_secret_key
 JWT_EXPIRES_IN=7d
@@ -91,7 +90,7 @@ JWT_EXPIRES_IN=7d
 
 ## Technology Stack
 
-- Backend: Node.js, Express, PostgreSQL (Sequelize), Redis, JWT, Socket.io
+- Backend: Node.js, Express, PostgreSQL (Sequelize), JWT, Socket.io
 - Frontend: React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui, Radix UI
 - Tooling: ESLint, Prettier, Jest/Supertest (backend), React Query, React Router
 
@@ -119,7 +118,7 @@ npm run lint      # linting
 
 ## Running Locally (Summary)
 
-1. Start PostgreSQL and Redis locally
+1. Start PostgreSQL locally
 2. Start Backend: `cd Backend && npm run dev`
 3. Start Frontend: `cd office-nexus-schema && npm run dev`
 4. Open the app at `http://localhost:5173` (the frontend will talk to `http://localhost:${Backend_Port}`)
@@ -129,7 +128,7 @@ npm run lint      # linting
 ## Deployment Notes
 
 - Build the frontend: `npm run build` in `office-nexus-schema/` and deploy the `dist/` folder to your static host.
-- Build and run the backend under a process manager (e.g., PM2) with production environment variables and managed PostgreSQL/Redis services.
+- Build and run the backend under a process manager (e.g., PM2) with production environment variables and managed PostgreSQL services.
 - Configure CORS to allow only your production frontend origin.
 
 ---

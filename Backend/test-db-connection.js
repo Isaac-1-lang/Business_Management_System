@@ -40,19 +40,28 @@ if (host && host.includes('postgresql://')) {
   }
 }
 
-// Create Sequelize instance
+// Create Sequelize instance with SSL configurable via env
+const shouldUseSsl = String(process.env.DB_SSL || 'false').toLowerCase() === 'true';
+const rejectUnauthorized = String(process.env.DB_SSL_REJECT_UNAUTHORIZED || 'true').toLowerCase() === 'true';
+
 const sequelize = new Sequelize(database, username, password, {
   host: host,
   port: port,
   dialect: 'postgres',
   logging: false,
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false
-    },
-    connectTimeout: 30000
-  },
+  dialectOptions: (() => {
+    const base = { connectTimeout: 30000 };
+    if (shouldUseSsl) {
+      return {
+        ...base,
+        ssl: {
+          require: true,
+          rejectUnauthorized,
+        },
+      };
+    }
+    return base;
+  })(),
   retry: {
     max: 3,
     timeout: 3000

@@ -1,261 +1,132 @@
 /**
- * REDIS CONNECTION - Caching, Sessions, and Real-time Features
- * 
- * This file handles the Redis connection for:
- * - Session storage
- * - Caching frequently accessed data
- * - Real-time notification delivery
- * - Background job queues
- * - Rate limiting
- * 
- * FEATURES:
- * - Redis connection with error handling
- * - Connection pooling and reconnection
- * - Environment-based configuration
- * - Health check and monitoring
+ * IN-MEMORY STORE (Redis temporarily disabled)
+ *
+ * This module provides the same interface as the previous Redis-based
+ * implementation but uses an in-memory Map so the rest of the codebase
+ * can remain unchanged while Redis is removed.
  */
 
-import { createClient } from 'redis';
-import dotenv from 'dotenv';
+import EventEmitter from 'events';
 
-dotenv.config();
+const inMemoryStore = new Map();
+const emitter = new EventEmitter();
 
-// Redis configuration
-const redisConfig = {
-  host: process.env.REDIS_HOST || 'localhost',
-  port: process.env.REDIS_PORT || 6379,
-  password: process.env.REDIS_PASSWORD || undefined,
-  db: process.env.REDIS_DB || 0,
-  retry_strategy: (options) => {
-    if (options.error && options.error.code === 'ECONNREFUSED') {
-      // End reconnecting on a specific error and flush all commands with a individual error
-      return new Error('The server refused the connection');
-    }
-    if (options.total_retry_time > 1000 * 60 * 60) {
-      // End reconnecting after a specific timeout and flush all commands with a individual error
-      return new Error('Retry time exhausted');
-    }
-    if (options.attempt > 10) {
-      // End reconnecting with built in error
-      return undefined;
-    }
-    // Reconnect after
-    return Math.min(options.attempt * 100, 3000);
-  },
-  enable_offline_queue: false,
-  max_attempts: 10
-};
+function nowSeconds() {
+  return Math.floor(Date.now() / 1000);
+}
 
-// Create Redis client
-const redisClient = createClient(redisConfig);
-
-// Redis event handlers
-redisClient.on('connect', () => {
-  console.log('Redis client connected');
-});
-
-redisClient.on('ready', () => {
-  console.log('Redis client ready');
-});
-
-redisClient.on('error', (err) => {
-  console.error('Redis client error:', err);
-});
-
-redisClient.on('end', () => {
-  console.log('Redis client disconnected');
-});
-
-redisClient.on('reconnecting', () => {
-  console.log('Redis client reconnecting...');
-});
-
-// Connect to Redis
+// No-op connect/close functions to keep server bootstrap intact
 export async function connectRedis() {
-  try {
-    await redisClient.connect();
-    console.log('Redis connection established successfully.');
-    
-    // Test connection with ping
-    const pong = await redisClient.ping();
-    if (pong === 'PONG') {
-      console.log('Redis ping successful');
-    }
-    
-    return redisClient;
-  } catch (error) {
-    console.error('Unable to connect to Redis:', error);
-    throw error;
-  }
+  console.log('[Redis disabled] Using in-memory store');
+  return null;
 }
 
-// Close Redis connection
 export async function closeRedis() {
-  try {
-    await redisClient.quit();
-    console.log('Redis connection closed successfully.');
-  } catch (error) {
-    console.error('Error closing Redis connection:', error);
-    throw error;
-  }
+  return null;
 }
 
-// Get Redis client instance
 export function getRedisClient() {
-  return redisClient;
+  return null;
 }
 
-// Redis utility functions
 export class RedisService {
-  // Set key with expiration
   static async set(key, value, expireSeconds = null) {
-    try {
-      if (expireSeconds) {
-        await redisClient.setEx(key, expireSeconds, JSON.stringify(value));
-      } else {
-        await redisClient.set(key, JSON.stringify(value));
-      }
-      return true;
-    } catch (error) {
-      console.error('Redis set error:', error);
-      return false;
-    }
+    const record = {
+      value,
+      expiresAt: expireSeconds ? nowSeconds() + expireSeconds : null
+    };
+    inMemoryStore.set(key, record);
+    return true;
   }
 
-  // Get key value
   static async get(key) {
-    try {
-      const value = await redisClient.get(key);
-      return value ? JSON.parse(value) : null;
-    } catch (error) {
-      console.error('Redis get error:', error);
+    const record = inMemoryStore.get(key);
+    if (!record) return null;
+    if (record.expiresAt && record.expiresAt <= nowSeconds()) {
+      inMemoryStore.delete(key);
       return null;
     }
+    return record.value;
   }
 
-  // Delete key
   static async del(key) {
-    try {
-      await redisClient.del(key);
-      return true;
-    } catch (error) {
-      console.error('Redis del error:', error);
-      return false;
-    }
+    inMemoryStore.delete(key);
+    return true;
   }
 
-  // Check if key exists
   static async exists(key) {
-    try {
-      const result = await redisClient.exists(key);
-      return result === 1;
-    } catch (error) {
-      console.error('Redis exists error:', error);
-      return false;
-    }
+    const val = await this.get(key);
+    return !!val;
   }
 
-  // Set expiration for existing key
   static async expire(key, seconds) {
-    try {
-      await redisClient.expire(key, seconds);
-      return true;
-    } catch (error) {
-      console.error('Redis expire error:', error);
-      return false;
-    }
+    const record = inMemoryStore.get(key);
+    if (!record) return false;
+    record.expiresAt = nowSeconds() + seconds;
+    inMemoryStore.set(key, record);
+    return true;
   }
 
-  // Get time to live for key
   static async ttl(key) {
-    try {
-      return await redisClient.ttl(key);
-    } catch (error) {
-      console.error('Redis ttl error:', error);
-      return -1;
-    }
+    const record = inMemoryStore.get(key);
+    if (!record || !record.expiresAt) return -1;
+    const ttl = record.expiresAt - nowSeconds();
+    return ttl > 0 ? ttl : -1;
   }
 
-  // Increment counter
   static async incr(key) {
-    try {
-      return await redisClient.incr(key);
-    } catch (error) {
-      console.error('Redis incr error:', error);
-      return null;
-    }
+    const current = (await this.get(key)) ?? 0;
+    const next = Number(current) + 1;
+    await this.set(key, next);
+    return next;
   }
 
-  // Decrement counter
   static async decr(key) {
-    try {
-      return await redisClient.decr(key);
-    } catch (error) {
-      console.error('Redis decr error:', error);
-      return null;
-    }
+    const current = (await this.get(key)) ?? 0;
+    const next = Number(current) - 1;
+    await this.set(key, next);
+    return next;
   }
 
-  // Add to set
   static async sadd(key, ...members) {
-    try {
-      return await redisClient.sAdd(key, members);
-    } catch (error) {
-      console.error('Redis sadd error:', error);
-      return 0;
-    }
+    const set = new Set((await this.get(key)) ?? []);
+    let added = 0;
+    members.forEach(m => {
+      if (!set.has(m)) {
+        set.add(m);
+        added += 1;
+      }
+    });
+    await this.set(key, Array.from(set));
+    return added;
   }
 
-  // Get set members
   static async smembers(key) {
-    try {
-      return await redisClient.sMembers(key);
-    } catch (error) {
-      console.error('Redis smembers error:', error);
-      return [];
-    }
+    return (await this.get(key)) ?? [];
   }
 
-  // Remove from set
   static async srem(key, ...members) {
-    try {
-      return await redisClient.sRem(key, members);
-    } catch (error) {
-      console.error('Redis srem error:', error);
-      return 0;
-    }
+    const set = new Set((await this.get(key)) ?? []);
+    let removed = 0;
+    members.forEach(m => {
+      if (set.delete(m)) removed += 1;
+    });
+    await this.set(key, Array.from(set));
+    return removed;
   }
 
-  // Publish to channel
   static async publish(channel, message) {
-    try {
-      return await redisClient.publish(channel, JSON.stringify(message));
-    } catch (error) {
-      console.error('Redis publish error:', error);
-      return 0;
-    }
+    emitter.emit(channel, message);
+    return 1;
   }
 
-  // Subscribe to channel
   static async subscribe(channel, callback) {
-    try {
-      const subscriber = redisClient.duplicate();
-      await subscriber.connect();
-      await subscriber.subscribe(channel, (message) => {
-        try {
-          const parsedMessage = JSON.parse(message);
-          callback(parsedMessage);
-        } catch (error) {
-          callback(message);
-        }
-      });
-      return subscriber;
-    } catch (error) {
-      console.error('Redis subscribe error:', error);
-      return null;
-    }
+    const handler = (msg) => callback(msg);
+    emitter.on(channel, handler);
+    return {
+      unsubscribe: () => emitter.off(channel, handler)
+    };
   }
 }
 
-// Export Redis client and service
-export default redisClient;
+export default null;

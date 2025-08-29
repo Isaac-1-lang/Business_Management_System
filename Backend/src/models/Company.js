@@ -73,7 +73,8 @@ Company.init({
     unique: true,
     validate: {
       len: [5, 50]
-    }
+    },
+    field: 'rdb_registration_number'
   },
   
   rdbRegistrationDate: {
@@ -82,18 +83,21 @@ Company.init({
     validate: {
       isDate: true,
       isPast: true
-    }
+    },
+    field: 'rdb_registration_date'
   },
   
   businessType: {
     type: DataTypes.ENUM('Ltd', 'SARL', 'Cooperative', 'Partnership', 'Sole Proprietorship', 'Branch', 'Other'),
     allowNull: false,
-    defaultValue: 'Ltd'
+    defaultValue: 'Ltd',
+    field: 'business_type'
   },
   
   businessCategory: {
     type: DataTypes.STRING(100),
-    allowNull: true
+    allowNull: true,
+    field: 'business_category'
   },
   
   // Tax Information (Rwanda)
@@ -104,7 +108,8 @@ Company.init({
     validate: {
       len: [9, 20],
       is: /^[0-9]+$/ // Only numbers
-    }
+    },
+    field: 'tin'
   },
   
   vatNumber: {
@@ -113,13 +118,15 @@ Company.init({
     unique: true,
     validate: {
       len: [9, 20]
-    }
+    },
+    field: 'vat_number' 
   },
-  
+   
   taxRegime: {
     type: DataTypes.ENUM('Standard', 'Simplified', 'Exempt', 'Other'),
     allowNull: false,
-    defaultValue: 'Standard'
+    defaultValue: 'Standard',
+    field: 'tax_regime'
   },
   
   vatRegistrationDate: {
@@ -127,14 +134,16 @@ Company.init({
     allowNull: true,
     validate: {
       isDate: true
-    }
+    },
+    field: 'vat_registration_date'
   },
   
   // Financial Configuration
   currency: {
     type: DataTypes.ENUM('RWF', 'USD', 'EUR'),
     allowNull: false,
-    defaultValue: 'RWF'
+    defaultValue: 'RWF',
+    field: 'currency'
   },
   
   secondaryCurrencies: {
@@ -376,26 +385,26 @@ Company.init({
     },
     {
       unique: true,
-      fields: ['vatNumber']
+      fields: ['vat_number']
     },
     {
       unique: true,
-      fields: ['rdbRegistrationNumber']
+      fields: ['rdb_registration_number']
     },
     {
       fields: ['status']
     },
     {
-      fields: ['complianceStatus']
+      fields: ['compliance_status']
     },
     {
-      fields: ['businessType']
+      fields: ['business_type']
     },
     {
       fields: ['city']
     },
     {
-      fields: ['createdAt']
+      fields: ['created_at']
     }
   ],
   
