@@ -5,9 +5,9 @@
  * - Full user information collection
  * - Password strength validation
  * - Email verification
- * - Role selection
  * - Company association
  * - Integration with auth context
+ * - All registered users become owners by default
  */
 
 import React, { useState, useEffect } from 'react';
@@ -17,7 +17,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Alert, AlertDescription } from '../ui/alert';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+
 import { Eye, EyeOff, Mail, Lock, User, Phone, Building, Loader2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -27,14 +27,8 @@ interface RegisterFormProps {
   className?: string;
 }
 
-const USER_ROLES = [
-  { value: 'owner', label: 'Business Owner' },
-  { value: 'manager', label: 'Manager' },
-  { value: 'accountant', label: 'Accountant' },
-  { value: 'hr', label: 'HR Manager' },
-  { value: 'employee', label: 'Employee' },
-  { value: 'viewer', label: 'Viewer' },
-];
+// All registered users will be owners by default
+// Role selection removed - users can create other roles later from the main app
 
 export function RegisterForm({ onSuccess, onSwitchToLogin, className }: RegisterFormProps) {
   const { register, isLoading, error, clearError } = useAuth();
@@ -45,7 +39,6 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
     password: '',
     confirmPassword: '',
     phone: '',
-    role: 'employee',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -73,21 +66,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
     }
   };
 
-  // Handle select changes
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
 
-    // Clear validation error for this field
-    if (validationErrors[name]) {
-      setValidationErrors(prev => ({
-        ...prev,
-        [name]: '',
-      }));
-    }
-  };
 
   // Validate password strength
   const validatePasswordStrength = (password: string): { isValid: boolean; message: string } => {
@@ -168,7 +147,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
       email: formData.email.toLowerCase(),
       password: formData.password,
       phone: formData.phone || undefined,
-      role: formData.role,
+      // Role is automatically set to 'owner' on the backend
     });
 
     if (success && onSuccess) {
@@ -180,10 +159,10 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
     <Card className={cn('w-full max-w-md mx-auto bg-white border-blue-200', className)}>
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold text-center text-blue-900">
-          Create account
+          Create Owner Account
         </CardTitle>
         <CardDescription className="text-center text-blue-700">
-          Enter your information to create your account
+          Enter your information to create your business owner account
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -205,7 +184,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
                   id="firstName"
                   name="firstName"
                   type="text"
-                  placeholder="John"
+                  placeholder="Name"
                   value={formData.firstName}
                   onChange={handleInputChange}
                   className={cn(
@@ -226,7 +205,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
                 id="lastName"
                 name="lastName"
                 type="text"
-                placeholder="Doe"
+                placeholder="Last Name"
                 value={formData.lastName}
                 onChange={handleInputChange}
                 className={cn(
@@ -250,7 +229,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
                 id="email"
                 name="email"
                 type="email"
-                placeholder="john.doe@example.com"
+                placeholder="Email"
                 value={formData.email}
                 onChange={handleInputChange}
                 className={cn(
@@ -274,7 +253,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
                 id="phone"
                 name="phone"
                 type="tel"
-                placeholder="+250788123456"
+                placeholder="Phone"
                 value={formData.phone}
                 onChange={handleInputChange}
                 className={cn(
@@ -289,26 +268,8 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
             )}
           </div>
 
-          {/* Role Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="role" className="text-blue-900 font-medium">Role</Label>
-            <Select
-              value={formData.role}
-              onValueChange={(value) => handleSelectChange('role', value)}
-              disabled={isLoading}
-            >
-              <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500">
-                <SelectValue placeholder="Select your role" />
-              </SelectTrigger>
-              <SelectContent>
-                {USER_ROLES.map((role) => (
-                  <SelectItem key={role.value} value={role.value}>
-                    {role.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Role is automatically set to 'owner' for all registered users */}
+          {/* Users can create other roles later from the main application */}
 
           {/* Password Field */}
           <div className="space-y-2">
@@ -319,7 +280,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
                 id="password"
                 name="password"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Create a strong password"
+                placeholder="Password"
                 value={formData.password}
                 onChange={handleInputChange}
                 className={cn(
@@ -358,7 +319,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
                 id="confirmPassword"
                 name="confirmPassword"
                 type={showConfirmPassword ? 'text' : 'password'}
-                placeholder="Confirm your password"
+                placeholder="Confirm Password"
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
                 className={cn(
@@ -397,10 +358,10 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating account...
+                Creating owner account...
               </>
             ) : (
-              'Create account'
+              'Create Owner Account'
             )}
           </Button>
         </form>

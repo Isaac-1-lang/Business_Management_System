@@ -227,14 +227,6 @@ export function LoginForm({ onSuccess, onSwitchToRegister, className }: LoginFor
           </Button>
 
           {/* Demo Login Button */}
-          <Button
-            type="button"
-            className="w-full bg-white text-blue-600 border-blue-300 hover:bg-blue-50"
-            onClick={handleDemoLogin}
-            disabled={isLoading}
-          >
-            Try Demo Account
-          </Button>
         </form>
 
         {/* Footer Links */}

@@ -60,10 +60,7 @@ const registerValidation = [
     .matches(/^(\+250|0)?7[2389][0-9]{7}$/)
     .withMessage('Please provide a valid Rwanda phone number'),
   
-  body('role')
-    .optional()
-    .isIn(['admin', 'owner', 'manager', 'accountant', 'hr', 'employee', 'viewer'])
-    .withMessage('Invalid role specified'),
+  // Role validation removed - all registered users are owners by default
   
   body('companyId')
     .optional()
@@ -114,7 +111,7 @@ router.post('/register', registerValidation, asyncHandler(async (req, res) => {
     return errorResponse(res, 'Validation failed', 400, 'VALIDATION_ERROR', errors.array());
   }
 
-  const { firstName, lastName, email, password, phone, role, companyId } = req.body;
+  const { firstName, lastName, email, password, phone, companyId } = req.body;
 
   // Check if user already exists
   const existingUser = await User.findByEmail(email);
@@ -122,15 +119,15 @@ router.post('/register', registerValidation, asyncHandler(async (req, res) => {
     return errorResponse(res, 'User with this email already exists', 409, 'USER_EXISTS');
   }
 
-  // Create user
+  // Create user - all registered users are owners by default
   const user = await User.create({
     firstName,
     lastName,
     email: email.toLowerCase(),
     password,
     phone,
-    role: role || 'employee',
-    permissions: getDefaultPermissions(role || 'employee'),
+    role: 'owner', // All registered users are owners by default
+    permissions: getDefaultPermissions('owner'),
     createdBy: req.body.createdBy || null
   });
 
@@ -138,7 +135,7 @@ router.post('/register', registerValidation, asyncHandler(async (req, res) => {
   if (companyId) {
     const company = await Company.findByPk(companyId);
     if (company) {
-      await user.addCompany(company, { through: { role: role || 'employee' } });
+      await user.addCompany(company, { through: { role: 'owner' } });
     }
   }
 

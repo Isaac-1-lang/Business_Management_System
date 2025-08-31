@@ -48,62 +48,20 @@ class NotificationService {
 
   // Check for compliance deadlines and create notifications
   static checkComplianceDeadlines(): void {
-    const today = new Date();
-    const fiveDaysFromNow = new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000);
-
-    // VAT deadline check
-    const nextVATDue = new Date(today.getFullYear(), today.getMonth() + 1, 15);
-    if (nextVATDue <= fiveDaysFromNow) {
-      this.createNotification({
-        user_id: 'current-user',
-        title: 'VAT Filing Due Soon',
-        message: `VAT return filing is due on ${nextVATDue.toLocaleDateString()}`,
-        type: 'alert',
-        priority: 'high',
-        due_date: nextVATDue.toISOString(),
-        action_url: '/tax-returns'
-      });
-    }
-
-    // PAYE deadline check
-    const nextPAYEDue = new Date(today.getFullYear(), today.getMonth() + 1, 9);
-    if (nextPAYEDue <= fiveDaysFromNow) {
-      this.createNotification({
-        user_id: 'current-user',
-        title: 'PAYE Returns Due Soon',
-        message: `PAYE returns are due on ${nextPAYEDue.toLocaleDateString()}`,
-        type: 'alert',
-        priority: 'high',
-        due_date: nextPAYEDue.toISOString(),
-        action_url: '/payroll-hr'
-      });
-    }
+    // This will be implemented with real data from the backend
+    // For now, it's empty to avoid dummy data
   }
 
   // Check for missing documents
   static checkMissingDocuments(): void {
-    const documents = JSON.parse(localStorage.getItem('documents') || '[]');
-    const requiredDocs = ['rdb-registration', 'trading-licenses', 'tax-filing'];
-    
-    requiredDocs.forEach(category => {
-      const hasDoc = documents.some((doc: any) => doc.category === category);
-      if (!hasDoc) {
-        this.createNotification({
-          user_id: 'current-user',
-          title: 'Missing Required Document',
-          message: `Please upload ${category.replace('-', ' ')} documents to ensure compliance`,
-          type: 'warning',
-          priority: 'medium',
-          action_url: '/document-vault'
-        });
-      }
-    });
+    // This will be implemented with real data from the backend
+    // For now, it's empty to avoid dummy data
   }
 
-  // Initialize with some sample notifications
+  // Initialize notifications (empty for now)
   static initialize(): void {
-    this.checkComplianceDeadlines();
-    this.checkMissingDocuments();
+    // This will be implemented with real data from the backend
+    // For now, it's empty to avoid dummy data
   }
 }
 
