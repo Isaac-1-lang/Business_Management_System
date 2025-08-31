@@ -104,7 +104,7 @@ export const authMiddleware = async (req, res, next) => {
         {
           model: Company,
           as: 'companies',
-          through: { attributes: ['role'] }
+          through: { attributes: [] } // Simple junction table without role for now
         }
       ]
     });
@@ -287,7 +287,7 @@ export const optionalAuth = async (req, res, next) => {
           {
             model: Company,
             as: 'companies',
-            through: { attributes: ['role'] }
+            through: { attributes: [] } // Simple junction table without role for now
           }
         ]
       });

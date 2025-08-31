@@ -329,7 +329,7 @@ User.findByCompany = async function(companyId) {
       model: sequelize.models.Company,
       as: 'companies',
       where: { id: companyId },
-      through: { attributes: ['role'] }
+      through: { attributes: [] } // Simple junction table without role for now
     }],
     where: { isActive: true }
   });

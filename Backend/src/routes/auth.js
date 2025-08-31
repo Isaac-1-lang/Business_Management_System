@@ -209,7 +209,7 @@ router.post('/login', loginValidation, asyncHandler(async (req, res) => {
     include: [{
       model: Company,
       as: 'companies',
-      through: { attributes: ['role'] }
+      through: { attributes: [] } // Simple junction table without role for now
     }]
   });
 
@@ -463,7 +463,7 @@ router.get('/me', asyncHandler(async (req, res) => {
     include: [{
       model: Company,
       as: 'companies',
-      through: { attributes: ['role'] }
+      through: { attributes: [] } // Simple junction table without role for now
     }]
   });
 

@@ -10,42 +10,8 @@ import { requireCompanyAccess } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Hardcoded notification data for testing
-const notifications = [
-  {
-    id: '1',
-    userId: '1',
-    companyId: '1',
-    type: 'tax_deadline',
-    title: 'VAT Return Due',
-    message: 'Your VAT return for January 2024 is due on February 15, 2024',
-    priority: 'high',
-    isRead: false,
-    createdAt: '2024-02-01T10:00:00Z'
-  },
-  {
-    id: '2',
-    userId: '1',
-    companyId: '1',
-    type: 'compliance_alert',
-    title: 'RSSB Contribution Completed',
-    message: 'RSSB contribution for January 2024 has been successfully submitted',
-    priority: 'medium',
-    isRead: true,
-    createdAt: '2024-02-10T14:30:00Z'
-  },
-  {
-    id: '3',
-    userId: '1',
-    companyId: '1',
-    type: 'system_update',
-    title: 'System Maintenance',
-    message: 'Scheduled system maintenance will occur on February 20, 2024 from 2:00 AM to 4:00 AM',
-    priority: 'low',
-    isRead: false,
-    createdAt: '2024-02-12T09:15:00Z'
-  }
-];
+// Empty notifications array - will be populated from database in production
+const notifications = [];
 
 /**
  * GET /notifications

@@ -10,59 +10,8 @@ import { requireRole, requireCompanyAccess } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Hardcoded reports data for testing
-const reports = [
-  {
-    id: '1',
-    companyId: '1',
-    type: 'financial_summary',
-    title: 'Financial Summary Report',
-    description: 'Monthly financial summary for January 2024',
-    period: '2024-01',
-    status: 'completed',
-    generatedAt: '2024-02-01T10:00:00Z',
-    data: {
-      revenue: 5000000,
-      expenses: 2000000,
-      netIncome: 3000000,
-      cashFlow: 2500000
-    }
-  },
-  {
-    id: '2',
-    companyId: '1',
-    type: 'tax_summary',
-    title: 'Tax Summary Report',
-    description: 'Tax summary for Q4 2023',
-    period: '2023-Q4',
-    status: 'completed',
-    generatedAt: '2024-01-15T14:30:00Z',
-    data: {
-      vatCollected: 900000,
-      vatPaid: 720000,
-      vatNet: 180000,
-      corporateTax: 1500000,
-      rssbContributions: 450000
-    }
-  },
-  {
-    id: '3',
-    companyId: '1',
-    type: 'compliance_report',
-    title: 'Compliance Status Report',
-    description: 'Compliance status as of February 2024',
-    period: '2024-02',
-    status: 'completed',
-    generatedAt: '2024-02-10T09:15:00Z',
-    data: {
-      overallStatus: 'compliant',
-      vatStatus: 'compliant',
-      corporateStatus: 'pending',
-      rssbStatus: 'compliant',
-      rdbStatus: 'compliant'
-    }
-  }
-];
+// Empty reports array - will be populated from database in production
+const reports = [];
 
 /**
  * GET /reports
@@ -216,46 +165,15 @@ router.get('/available-types', asyncHandler(async (req, res) => {
 
 /**
  * Helper function to generate report data based on type
+ * This will be implemented with real data from the database in production
  */
 function generateReportData(type, period) {
-  const baseData = {
+  // This will be implemented with real data from the database in production
+  // For now, it returns empty data to avoid dummy data
+  return {
     period,
     generatedAt: new Date().toISOString()
   };
-  
-  switch (type) {
-    case 'financial_summary':
-      return {
-        ...baseData,
-        revenue: Math.floor(Math.random() * 10000000) + 1000000,
-        expenses: Math.floor(Math.random() * 5000000) + 500000,
-        netIncome: Math.floor(Math.random() * 5000000) + 500000,
-        cashFlow: Math.floor(Math.random() * 3000000) + 200000
-      };
-    
-    case 'tax_summary':
-      return {
-        ...baseData,
-        vatCollected: Math.floor(Math.random() * 2000000) + 500000,
-        vatPaid: Math.floor(Math.random() * 1500000) + 300000,
-        vatNet: Math.floor(Math.random() * 500000) + 100000,
-        corporateTax: Math.floor(Math.random() * 3000000) + 1000000,
-        rssbContributions: Math.floor(Math.random() * 1000000) + 200000
-      };
-    
-    case 'compliance_report':
-      return {
-        ...baseData,
-        overallStatus: 'compliant',
-        vatStatus: 'compliant',
-        corporateStatus: 'pending',
-        rssbStatus: 'compliant',
-        rdbStatus: 'compliant'
-      };
-    
-    default:
-      return baseData;
-  }
 }
 
 export default router;

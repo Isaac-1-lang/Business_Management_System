@@ -9,23 +9,24 @@ import { User } from './User.js';
 import { Company } from './Company.js';
 import sequelize from '../database/connection.js';
 
-// User-Company Many-to-Many relationship
+// User-Company Many-to-Many relationship with UserCompany model
 // Users can belong to multiple companies, and companies can have multiple users
 User.belongsToMany(Company, {
   through: 'user_companies',
   as: 'companies',
   foreignKey: 'userId',
-  otherKey: 'companyId',
-  timestamps: true
+  otherKey: 'companyId'
 });
 
 Company.belongsToMany(User, {
   through: 'user_companies',
   as: 'users',
   foreignKey: 'companyId',
-  otherKey: 'userId',
-  timestamps: true
+  otherKey: 'userId'
 });
+
+// Note: Using string-based junction table for now
+// Direct associations can be added later when UserCompany model is properly set up
 
 // Company-User One-to-Many relationship for audit fields
 Company.belongsTo(User, {

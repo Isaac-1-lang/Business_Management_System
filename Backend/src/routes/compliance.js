@@ -10,53 +10,18 @@ import { requireRole, requireCompanyAccess } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Hardcoded compliance data for testing
-const complianceAlerts = [
-  {
-    id: '1',
-    companyId: '1',
-    type: 'VAT_DEADLINE',
-    title: 'VAT Return Due',
-    message: 'VAT return for January 2024 is due on February 15, 2024',
-    severity: 'high',
-    dueDate: '2024-02-15',
-    status: 'pending',
-    createdAt: '2024-01-20'
-  },
-  {
-    id: '2',
-    companyId: '1',
-    type: 'CORPORATE_TAX',
-    title: 'Corporate Tax Filing',
-    message: 'Annual corporate tax return is due on April 30, 2024',
-    severity: 'medium',
-    dueDate: '2024-04-30',
-    status: 'pending',
-    createdAt: '2024-01-15'
-  },
-  {
-    id: '3',
-    companyId: '1',
-    type: 'RSSB_CONTRIBUTION',
-    title: 'RSSB Contribution Due',
-    message: 'RSSB contribution for January 2024 is due on February 15, 2024',
-    severity: 'high',
-    dueDate: '2024-02-15',
-    status: 'completed',
-    createdAt: '2024-01-20',
-    completedAt: '2024-02-10'
-  }
-];
+// Empty compliance data arrays - will be populated from database in production
+const complianceAlerts = [];
 
 const complianceStatus = {
-  companyId: '1',
-  overallStatus: 'compliant',
-  lastUpdated: '2024-02-10',
+  companyId: null,
+  overallStatus: 'unknown',
+  lastUpdated: null,
   details: {
-    vat: { status: 'compliant', lastSubmission: '2024-02-10', nextDeadline: '2024-03-15' },
-    corporate: { status: 'pending', lastSubmission: null, nextDeadline: '2024-04-30' },
-    rssb: { status: 'compliant', lastSubmission: '2024-02-10', nextDeadline: '2024-03-15' },
-    rdb: { status: 'compliant', lastRenewal: '2024-01-15', nextRenewal: '2025-01-15' }
+    vat: { status: 'unknown', lastSubmission: null, nextDeadline: null },
+    corporate: { status: 'unknown', lastSubmission: null, nextDeadline: null },
+    rssb: { status: 'unknown', lastSubmission: null, nextDeadline: null },
+    rdb: { status: 'unknown', lastRenewal: null, nextRenewal: null }
   }
 };
 
