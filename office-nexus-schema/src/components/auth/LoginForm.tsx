@@ -116,12 +116,12 @@ export function LoginForm({ onSuccess, onSwitchToRegister, className }: LoginFor
   };
 
   return (
-    <Card className={cn('w-full max-w-md mx-auto', className)}>
+    <Card className={cn('w-full max-w-md mx-auto bg-white border-blue-200', className)}>
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">
+        <CardTitle className="text-2xl font-bold text-center text-blue-900">
           Welcome back
         </CardTitle>
-        <CardDescription className="text-center">
+        <CardDescription className="text-center text-blue-700">
           Enter your credentials to access your account
         </CardDescription>
       </CardHeader>
@@ -129,16 +129,16 @@ export function LoginForm({ onSuccess, onSwitchToRegister, className }: LoginFor
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Error Alert */}
           {error && (
-            <Alert variant="destructive">
+            <Alert className="bg-red-50 border-red-200 text-red-800">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
           {/* Email Field */}
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-blue-900 font-medium">Email</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Mail className="absolute left-3 top-3 h-4 w-4 text-blue-500" />
               <Input
                 id="email"
                 name="email"
@@ -147,7 +147,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister, className }: LoginFor
                 value={formData.email}
                 onChange={handleInputChange}
                 className={cn(
-                  'pl-10',
+                  'pl-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500',
                   validationErrors.email && 'border-red-500 focus:border-red-500'
                 )}
                 disabled={isLoading}
@@ -160,9 +160,9 @@ export function LoginForm({ onSuccess, onSwitchToRegister, className }: LoginFor
 
           {/* Password Field */}
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="text-blue-900 font-medium">Password</Label>
             <div className="relative">
-              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Lock className="absolute left-3 top-3 h-4 w-4 text-blue-500" />
               <Input
                 id="password"
                 name="password"
@@ -171,7 +171,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister, className }: LoginFor
                 value={formData.password}
                 onChange={handleInputChange}
                 className={cn(
-                  'pl-10 pr-10',
+                  'pl-10 pr-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500',
                   validationErrors.password && 'border-red-500 focus:border-red-500'
                 )}
                 disabled={isLoading}
@@ -179,7 +179,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister, className }: LoginFor
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                className="absolute right-3 top-3 text-blue-500 hover:text-blue-700"
                 disabled={isLoading}
               >
                 {showPassword ? (
@@ -202,10 +202,10 @@ export function LoginForm({ onSuccess, onSwitchToRegister, className }: LoginFor
               type="checkbox"
               checked={formData.rememberMe}
               onChange={handleInputChange}
-              className="rounded border-gray-300"
+              className="rounded border-blue-300 text-blue-600 focus:ring-blue-500"
               disabled={isLoading}
             />
-            <Label htmlFor="rememberMe" className="text-sm">
+            <Label htmlFor="rememberMe" className="text-sm text-blue-900">
               Remember me
             </Label>
           </div>
@@ -213,7 +213,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister, className }: LoginFor
           {/* Submit Button */}
           <Button
             type="submit"
-            className="w-full"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white border-0"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -229,8 +229,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister, className }: LoginFor
           {/* Demo Login Button */}
           <Button
             type="button"
-            variant="outline"
-            className="w-full"
+            className="w-full bg-white text-blue-600 border-blue-300 hover:bg-blue-50"
             onClick={handleDemoLogin}
             disabled={isLoading}
           >
@@ -240,19 +239,16 @@ export function LoginForm({ onSuccess, onSwitchToRegister, className }: LoginFor
 
         {/* Footer Links */}
         <div className="mt-6 text-center space-y-2">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-blue-700">
             Don't have an account?{' '}
             <button
               type="button"
               onClick={onSwitchToRegister}
-              className="text-primary hover:underline font-medium"
+              className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
               disabled={isLoading}
             >
               Sign up
             </button>
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Demo credentials: admin@test.com / Admin123!
           </p>
         </div>
       </CardContent>

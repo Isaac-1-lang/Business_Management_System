@@ -31,12 +31,28 @@ import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { LogOut, User, Settings, Building } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export function DashboardHeader() {
   const { user, selectedCompany, logout } = useAuth();
+  const { toast } = useToast();
 
   const handleLogout = async () => {
-    await logout();
+    if (window.confirm('Are you sure you want to logout?')) {
+      try {
+        await logout();
+        toast({
+          title: "Logged out successfully",
+          description: "You have been logged out of your account.",
+        });
+      } catch (error) {
+        toast({
+          title: "Logout failed",
+          description: "There was an error logging out. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const getUserInitials = (firstName: string, lastName: string) => {

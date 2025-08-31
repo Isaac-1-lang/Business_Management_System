@@ -48,6 +48,9 @@ import complianceRoutes from './routes/compliance.js';
 import notificationRoutes from './routes/notification.js';
 import reportRoutes from './routes/reports.js';
 
+// Import model associations
+import './models/associations.js';
+
 // Load environment variables
 dotenv.config();
 
@@ -62,7 +65,12 @@ const requestHandler = async (req,res)=> {
 }
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:8080",
+    origin: [
+      process.env.FRONTEND_URL || "http://localhost:5173",
+      "http://localhost:8080",
+      "http://localhost:3000",
+      "http://localhost:5174"
+    ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
   }
@@ -90,7 +98,23 @@ app.use(helmet({
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      process.env.FRONTEND_URL || "http://localhost:5173",
+      "http://localhost:8080",
+      "http://localhost:3000",
+      "http://localhost:5174"
+    ];
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -129,6 +153,21 @@ app.get('/health', (req, res) => {
     environment: NODE_ENV,
     version: '1.0.0',
     uptime: process.uptime()
+  });
+});
+
+// API health check endpoint
+app.get('/api/v1/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'API is healthy',
+    data: {
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      environment: NODE_ENV,
+      version: '1.0.0',
+      uptime: process.uptime()
+    }
   });
 });
 

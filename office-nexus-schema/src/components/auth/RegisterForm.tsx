@@ -177,12 +177,12 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
   };
 
   return (
-    <Card className={cn('w-full max-w-md mx-auto', className)}>
+    <Card className={cn('w-full max-w-md mx-auto bg-white border-blue-200', className)}>
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">
+        <CardTitle className="text-2xl font-bold text-center text-blue-900">
           Create account
         </CardTitle>
-        <CardDescription className="text-center">
+        <CardDescription className="text-center text-blue-700">
           Enter your information to create your account
         </CardDescription>
       </CardHeader>
@@ -190,7 +190,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Error Alert */}
           {error && (
-            <Alert variant="destructive">
+            <Alert className="bg-red-50 border-red-200 text-red-800">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
@@ -198,9 +198,9 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
           {/* Name Fields */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="firstName">First Name</Label>
+              <Label htmlFor="firstName" className="text-blue-900 font-medium">First Name</Label>
               <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <User className="absolute left-3 top-3 h-4 w-4 text-blue-500" />
                 <Input
                   id="firstName"
                   name="firstName"
@@ -209,7 +209,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
                   value={formData.firstName}
                   onChange={handleInputChange}
                   className={cn(
-                    'pl-10',
+                    'pl-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500',
                     validationErrors.firstName && 'border-red-500 focus:border-red-500'
                   )}
                   disabled={isLoading}
@@ -221,7 +221,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name</Label>
+              <Label htmlFor="lastName" className="text-blue-900 font-medium">Last Name</Label>
               <Input
                 id="lastName"
                 name="lastName"
@@ -230,6 +230,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
                 value={formData.lastName}
                 onChange={handleInputChange}
                 className={cn(
+                  'border-blue-200 focus:border-blue-500 focus:ring-blue-500',
                   validationErrors.lastName && 'border-red-500 focus:border-red-500'
                 )}
                 disabled={isLoading}
@@ -242,9 +243,9 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
 
           {/* Email Field */}
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-blue-900 font-medium">Email</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Mail className="absolute left-3 top-3 h-4 w-4 text-blue-500" />
               <Input
                 id="email"
                 name="email"
@@ -253,7 +254,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
                 value={formData.email}
                 onChange={handleInputChange}
                 className={cn(
-                  'pl-10',
+                  'pl-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500',
                   validationErrors.email && 'border-red-500 focus:border-red-500'
                 )}
                 disabled={isLoading}
@@ -266,9 +267,9 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
 
           {/* Phone Field */}
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone (Optional)</Label>
+            <Label htmlFor="phone" className="text-blue-900 font-medium">Phone (Optional)</Label>
             <div className="relative">
-              <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Phone className="absolute left-3 top-3 h-4 w-4 text-blue-500" />
               <Input
                 id="phone"
                 name="phone"
@@ -277,7 +278,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
                 value={formData.phone}
                 onChange={handleInputChange}
                 className={cn(
-                  'pl-10',
+                  'pl-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500',
                   validationErrors.phone && 'border-red-500 focus:border-red-500'
                 )}
                 disabled={isLoading}
@@ -290,13 +291,13 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
 
           {/* Role Selection */}
           <div className="space-y-2">
-            <Label htmlFor="role">Role</Label>
+            <Label htmlFor="role" className="text-blue-900 font-medium">Role</Label>
             <Select
               value={formData.role}
               onValueChange={(value) => handleSelectChange('role', value)}
               disabled={isLoading}
             >
-              <SelectTrigger>
+              <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500">
                 <SelectValue placeholder="Select your role" />
               </SelectTrigger>
               <SelectContent>
@@ -311,9 +312,9 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
 
           {/* Password Field */}
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="text-blue-900 font-medium">Password</Label>
             <div className="relative">
-              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Lock className="absolute left-3 top-3 h-4 w-4 text-blue-500" />
               <Input
                 id="password"
                 name="password"
@@ -322,7 +323,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
                 value={formData.password}
                 onChange={handleInputChange}
                 className={cn(
-                  'pl-10 pr-10',
+                  'pl-10 pr-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500',
                   validationErrors.password && 'border-red-500 focus:border-red-500'
                 )}
                 disabled={isLoading}
@@ -330,7 +331,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                className="absolute right-3 top-3 text-blue-500 hover:text-blue-700"
                 disabled={isLoading}
               >
                 {showPassword ? (
@@ -344,15 +345,15 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
               <p className="text-sm text-red-500">{validationErrors.password}</p>
             )}
             {formData.password && !validationErrors.password && (
-              <p className="text-sm text-green-500">✓ Password is strong</p>
+              <p className="text-sm text-green-600">✓ Password is strong</p>
             )}
           </div>
 
           {/* Confirm Password Field */}
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Label htmlFor="confirmPassword" className="text-blue-900 font-medium">Confirm Password</Label>
             <div className="relative">
-              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Lock className="absolute left-3 top-3 h-4 w-4 text-blue-500" />
               <Input
                 id="confirmPassword"
                 name="confirmPassword"
@@ -361,7 +362,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
                 className={cn(
-                  'pl-10 pr-10',
+                  'pl-10 pr-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500',
                   validationErrors.confirmPassword && 'border-red-500 focus:border-red-500'
                 )}
                 disabled={isLoading}
@@ -369,7 +370,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                className="absolute right-3 top-3 text-blue-500 hover:text-blue-700"
                 disabled={isLoading}
               >
                 {showConfirmPassword ? (
@@ -383,14 +384,14 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
               <p className="text-sm text-red-500">{validationErrors.confirmPassword}</p>
             )}
             {formData.confirmPassword && !validationErrors.confirmPassword && formData.password === formData.confirmPassword && (
-              <p className="text-sm text-green-500">✓ Passwords match</p>
+              <p className="text-sm text-green-600">✓ Passwords match</p>
             )}
           </div>
 
           {/* Submit Button */}
           <Button
             type="submit"
-            className="w-full"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white border-0"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -406,12 +407,12 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
 
         {/* Footer Links */}
         <div className="mt-6 text-center">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-blue-700">
             Already have an account?{' '}
             <button
               type="button"
               onClick={onSwitchToLogin}
-              className="text-primary hover:underline font-medium"
+              className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
               disabled={isLoading}
             >
               Sign in

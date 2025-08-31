@@ -68,7 +68,8 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronRight,
-  Target
+  Target,
+  LogOut
 } from "lucide-react"
 
 // Import UI components for the sidebar
@@ -94,6 +95,8 @@ import {
 } from "@/components/ui/collapsible"
 import { Link, useLocation } from "react-router-dom"
 import { useState } from "react"
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from "@/hooks/use-toast";
 
 // Company Management Section
 // Contains core company information and strategic planning
@@ -234,10 +237,30 @@ const systemItems = [
 export function AppSidebar() {
   const [isStatutoryRegistersOpen, setIsStatutoryRegistersOpen] = useState(false)
   const location = useLocation()
+  const { logout } = useAuth();
+  const { toast } = useToast();
 
   const isActiveRoute = (url: string) => {
     return location.pathname === url
   }
+
+  const handleLogout = async () => {
+    if (window.confirm('Are you sure you want to logout?')) {
+      try {
+        await logout();
+        toast({
+          title: "Logged out successfully",
+          description: "You have been logged out of your account.",
+        });
+      } catch (error) {
+        toast({
+          title: "Logout failed",
+          description: "There was an error logging out. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
 
   return (
     <Sidebar variant="inset" className="border-r bg-white">
@@ -408,6 +431,12 @@ export function AppSidebar() {
                 <HelpCircle className="menu-item-icon" />
                 <span className="font-medium">Help & Support</span>
               </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={handleLogout} className="menu-item text-red-600 hover:text-red-700 hover:bg-red-50">
+              <LogOut className="menu-item-icon" />
+              <span className="font-medium">Logout</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

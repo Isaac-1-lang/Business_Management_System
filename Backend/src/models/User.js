@@ -119,7 +119,11 @@ User.init({
     allowNull: false,
     defaultValue: [],
     validate: {
-      isArray: true
+      isArray(value) {
+        if (!Array.isArray(value)) {
+          throw new Error('Permissions must be an array');
+        }
+      }
     }
   },
   
@@ -351,10 +355,10 @@ User.prototype.getPublicProfile = function() {
     phone: this.phone,
     role: this.role,
     avatar: this.avatar,
-    isActive: this.is_active,
+    isActive: this.isActive,
     isEmailVerified: this.isEmailVerified,
     lastLoginAt: this.lastLoginAt,
-    createdAt: this.created_at
+    createdAt: this.createdAt
   };
 };
 

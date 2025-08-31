@@ -25,12 +25,12 @@ export function Auth() {
   // Redirect if already authenticated
   React.useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      navigate('/');
     }
   }, [isAuthenticated, navigate]);
 
   const handleAuthSuccess = () => {
-    navigate('/dashboard');
+    navigate('/');
   };
 
   const switchToLogin = () => setMode('login');
@@ -114,10 +114,10 @@ export function Auth() {
         <div className="w-full max-w-md">
           {/* Mobile Header */}
           <div className="lg:hidden text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-3xl font-bold text-blue-900 mb-2">
               Office Nexus
             </h1>
-            <p className="text-gray-600">
+            <p className="text-blue-700">
               Complete business management solution
             </p>
           </div>
@@ -135,23 +135,9 @@ export function Auth() {
             />
           )}
 
-          {/* Demo Info */}
-          <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <h3 className="text-sm font-semibold text-blue-900 mb-2">
-              🚀 Try the Demo
-            </h3>
-            <p className="text-xs text-blue-700 mb-2">
-              Use these credentials to explore the system:
-            </p>
-            <div className="text-xs text-blue-600 space-y-1">
-              <p><strong>Admin:</strong> admin@test.com / Admin123!</p>
-              <p><strong>Owner:</strong> john@test.com / John123!</p>
-            </div>
-          </div>
-
           {/* Footer */}
           <div className="mt-8 text-center">
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-blue-600">
               © 2024 Office Nexus. All rights reserved.
             </p>
           </div>

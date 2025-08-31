@@ -151,7 +151,11 @@ Company.init({
     allowNull: false,
     defaultValue: [],
     validate: {
-      isArray: true
+      isArray(value) {
+        if (!Array.isArray(value)) {
+          throw new Error('Secondary currencies must be an array');
+        }
+      }
     }
   },
   

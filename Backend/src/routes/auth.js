@@ -230,13 +230,28 @@ router.post('/login', loginValidation, asyncHandler(async (req, res) => {
  * Logout user and invalidate tokens
  */
 router.post('/logout', asyncHandler(async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
-    await logout(token);
-  }
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      
+      // Blacklist the access token
+      await logout(token);
+      
+      // If we have user info from middleware, also clear refresh token
+      if (req.user && req.user.id) {
+        await RedisService.del(`refresh_token:${req.user.id}`);
+      }
+    }
 
-  return successResponse(res, null, 'Logout successful');
+    return successResponse(res, null, 'Logout successful');
+  } catch (error) {
+    console.error('Logout error:', error);
+    // Even if there's an error, we still want to return success
+    // to ensure the client can clear their tokens
+    return successResponse(res, null, 'Logout successful');
+  }
 }));
 
 // ==================== TOKEN REFRESH ====================
