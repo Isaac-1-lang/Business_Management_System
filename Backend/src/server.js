@@ -106,10 +106,23 @@ app.use(cors({
       process.env.FRONTEND_URL || "http://localhost:5173",
       "http://localhost:8080",
       "http://localhost:3000",
-      "http://localhost:5174"
+      "http://localhost:5174",
+      // Render.com domains
+      /^https:\/\/.*\.onrender\.com$/,
+      /^https:\/\/.*\.render\.com$/
     ];
     
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    // Check if origin matches any allowed pattern
+    const isAllowed = allowedOrigins.some(allowed => {
+      if (typeof allowed === 'string') {
+        return allowed === origin;
+      } else if (allowed instanceof RegExp) {
+        return allowed.test(origin);
+      }
+      return false;
+    });
+    
+    if (isAllowed) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -146,14 +159,9 @@ if (NODE_ENV === 'development') {
 
 // ==================== HEALTH CHECK ====================
 
+// Simple health check endpoint (for load balancers and Render)
 app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    environment: NODE_ENV,
-    version: '1.0.0',
-    uptime: process.uptime()
-  });
+  res.status(200).send('healthy\n');
 });
 
 // API health check endpoint

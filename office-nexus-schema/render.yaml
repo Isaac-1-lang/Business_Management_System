@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: office-nexus-frontend
+    env: static
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://your-backend-service-name.onrender.com
+      - key: VITE_WS_URL
+        value: wss://your-backend-service-name.onrender.com
+      - key: VITE_APP_NAME
+        value: Office Nexus
+      - key: VITE_APP_VERSION
+        value: 1.0.0
+      - key: VITE_APP_ENVIRONMENT
+        value: production
+      - key: VITE_ENABLE_ANALYTICS
+        value: false
+      - key: VITE_ENABLE_DEBUG
+        value: false
+      - key: VITE_ENABLE_SOCKET
+        value: true
+    autoDeploy: true
