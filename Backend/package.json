@@ -7,12 +7,13 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "build": "tsc",
+    "build": "vite build",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint src/",
     "migrate": "node src/database/migrate.js",
     "seed": "node src/database/seed.js",
-    "setup-db": "node setup-cloud-db.js"
+    "setup-db": "node setup-cloud-db.js",
+    "preview": "vite preview"
   },
   "keywords": [
     "rwanda",
