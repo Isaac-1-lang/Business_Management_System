@@ -1,0 +1,1390 @@
+openapi: 3.0.3
+info:
+  title: Office Nexus API
+  description: |
+    # Office Nexus Backend API
+    
+    A comprehensive HR and business management system designed for Rwandan businesses.
+    
+    ## Features
+    - **User Authentication & Authorization**: JWT-based authentication with role-based access control
+    - **Company Management**: Multi-company support with user associations
+    - **Employee Management**: Complete employee lifecycle management
+    - **Tax Management**: Rwanda-specific tax calculations and compliance
+    - **Accounting**: Financial records and reporting
+    - **Compliance**: Regulatory compliance monitoring and alerts
+    - **Real-time Notifications**: WebSocket-based notifications
+    - **Reporting**: Comprehensive business intelligence and reporting
+    
+    ## Authentication
+    This API uses JWT (JSON Web Tokens) for authentication. Include the token in the Authorization header:
+    ```
+    Authorization: Bearer <your-access-token>
+    ```
+    
+    ## Base URL
+    - **Production**: https://newbiceracing.onrender.com
+    - **Development**: http://localhost:5000
+    
+    ## Rate Limiting
+    API requests are limited to 100 requests per 15 minutes per IP address.
+    
+  version: 1.0.0
+  contact:
+    name: Office Nexus Development Team
+    email: support@officenexus.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://newbiceracing.onrender.com/api/v1
+    description: Production server
+  - url: http://localhost:5000/api/v1
+    description: Development server
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization endpoints
+  - name: Users
+    description: User management and profile operations
+  - name: Companies
+    description: Company management and operations
+  - name: Employees
+    description: Employee management and HR operations
+  - name: Tax
+    description: Tax management and compliance for Rwanda
+  - name: Compliance
+    description: Regulatory compliance and monitoring
+  - name: Notifications
+    description: Real-time notifications and alerts
+  - name: Reports
+    description: Business intelligence and reporting
+  - name: Health
+    description: API health and status endpoints
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: API Health Check
+      description: Check the health status of the API
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "API is healthy"
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        example: "OK"
+                      timestamp:
+                        type: string
+                        format: date-time
+                        example: "2024-01-15T10:30:00.000Z"
+                      environment:
+                        type: string
+                        example: "production"
+                      version:
+                        type: string
+                        example: "1.0.0"
+                      uptime:
+                        type: number
+                        example: 3600.5
+
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: User Registration
+      description: Register a new user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - firstName
+                - lastName
+                - email
+                - password
+              properties:
+                firstName:
+                  type: string
+                  minLength: 2
+                  maxLength: 50
+                  description: User's first name
+                  example: "John"
+                lastName:
+                  type: string
+                  minLength: 2
+                  maxLength: 50
+                  description: User's last name
+                  example: "Doe"
+                email:
+                  type: string
+                  format: email
+                  description: User's email address
+                  example: "john.doe@example.com"
+                password:
+                  type: string
+                  minLength: 8
+                  description: User's password (must contain uppercase, lowercase, number, and special character)
+                  example: "SecurePass123!"
+                phone:
+                  type: string
+                  pattern: '^(\+250|0)?7[2389][0-9]{7}$'
+                  description: Rwanda phone number (optional)
+                  example: "+250780123456"
+                companyId:
+                  type: string
+                  format: uuid
+                  description: Company ID to associate with (optional)
+                  example: "123e4567-e89b-12d3-a456-426614174000"
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User Login
+      description: Authenticate user and return access tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: User's email address
+                  example: "john.doe@example.com"
+                password:
+                  type: string
+                  description: User's password
+                  example: "SecurePass123!"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: User Logout
+      description: Logout user and invalidate tokens
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh Access Token
+      description: Get new access token using refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+                  description: Refresh token
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/me:
+    get:
+      tags:
+        - Users
+      summary: Get Current User Profile
+      description: Retrieve the authenticated user's profile and associated companies
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /companies:
+    get:
+      tags:
+        - Companies
+      summary: Get User's Companies
+      description: Retrieve all companies associated with the authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Companies retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompaniesResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - Companies
+      summary: Create Company
+      description: Create a new company (requires admin or owner role)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - businessType
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 200
+                  description: Company name
+                  example: "Acme Corporation Ltd"
+                businessType:
+                  type: string
+                  enum: [Ltd, SARL, Cooperative, Partnership, Sole Proprietorship, Branch, Other]
+                  description: Type of business entity
+                  example: "Ltd"
+                tin:
+                  type: string
+                  description: Tax Identification Number
+                  example: "123456789"
+                vatNumber:
+                  type: string
+                  description: VAT registration number
+                  example: "VAT123456"
+                rdbRegistration:
+                  type: string
+                  description: Rwanda Development Board registration
+                  example: "RDB123456"
+                address:
+                  type: object
+                  properties:
+                    street:
+                      type: string
+                      example: "123 Main Street"
+                    city:
+                      type: string
+                      example: "Kigali"
+                    district:
+                      type: string
+                      example: "Gasabo"
+                    sector:
+                      type: string
+                      example: "Kimihurura"
+                    cell:
+                      type: string
+                      example: "Kimihurura"
+                    postalCode:
+                      type: string
+                      example: "250"
+                phone:
+                  type: string
+                  pattern: '^(\+250|0)?7[2389][0-9]{7}$'
+                  description: Rwanda phone number
+                  example: "+250780123456"
+                email:
+                  type: string
+                  format: email
+                  description: Company email
+                  example: "info@acme.com"
+                website:
+                  type: string
+                  format: uri
+                  description: Company website
+                  example: "https://acme.com"
+                industry:
+                  type: string
+                  description: Industry sector
+                  example: "Technology"
+                size:
+                  type: string
+                  enum: [Micro, Small, Medium, Large]
+                  description: Company size category
+                  example: "Medium"
+      responses:
+        '201':
+          description: Company created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /companies/{id}:
+    get:
+      tags:
+        - Companies
+      summary: Get Company Details
+      description: Retrieve detailed information about a specific company
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Company ID
+          example: "123e4567-e89b-12d3-a456-426614174000"
+      responses:
+        '200':
+          description: Company details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyDetailResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Company not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /employees:
+    get:
+      tags:
+        - Employees
+      summary: Get Employees
+      description: Retrieve employees for the authenticated user's company
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by company ID
+          example: "123e4567-e89b-12d3-a456-426614174000"
+      responses:
+        '200':
+          description: Employees retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeesResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tax/returns:
+    get:
+      tags:
+        - Tax
+      summary: Get Tax Returns
+      description: Retrieve tax returns for the company
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [VAT, Corporate, Withholding, RSSB]
+          description: Filter by tax type
+          example: "VAT"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, submitted, paid, overdue]
+          description: Filter by status
+          example: "submitted"
+        - name: period
+          in: query
+          schema:
+            type: string
+            pattern: '^\d{4}-\d{2}$'
+          description: Filter by period (YYYY-MM format)
+          example: "2024-01"
+      responses:
+        '200':
+          description: Tax returns retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxReturnsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tax/rates:
+    get:
+      tags:
+        - Tax
+      summary: Get Tax Rates
+      description: Retrieve current tax rates for Rwanda
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Tax rates retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxRatesResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tax/calculate:
+    post:
+      tags:
+        - Tax
+      summary: Calculate Tax
+      description: Calculate tax amount based on income and type
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - type
+                - amount
+                - period
+              properties:
+                type:
+                  type: string
+                  enum: [VAT, Corporate, Withholding, RSSB]
+                  description: Type of tax to calculate
+                  example: "VAT"
+                amount:
+                  type: number
+                  minimum: 0
+                  description: Base amount for tax calculation
+                  example: 1000000
+                period:
+                  type: string
+                  pattern: '^\d{4}-\d{2}$'
+                  description: Tax period (YYYY-MM format)
+                  example: "2024-01"
+                additionalData:
+                  type: object
+                  description: Additional data for specific tax types
+                  example: {}
+      responses:
+        '200':
+          description: Tax calculated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxCalculationResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /compliance/alerts:
+    get:
+      tags:
+        - Compliance
+      summary: Get Compliance Alerts
+      description: Retrieve compliance alerts and notifications
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Compliance alerts retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplianceAlertsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /compliance/status:
+    get:
+      tags:
+        - Compliance
+      summary: Get Compliance Status
+      description: Retrieve overall compliance status for the company
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Compliance status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplianceStatusResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /notifications:
+    get:
+      tags:
+        - Notifications
+      summary: Get Notifications
+      description: Retrieve user notifications
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Notifications retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reports:
+    get:
+      tags:
+        - Reports
+      summary: Get Available Reports
+      description: Retrieve list of available report types
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Reports list retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportsListResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reports/generate:
+    post:
+      tags:
+        - Reports
+      summary: Generate Report
+      description: Generate a specific type of report
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - type
+              properties:
+                type:
+                  type: string
+                  enum: [financial, employee, tax, compliance, summary]
+                  description: Type of report to generate
+                  example: "financial"
+                params:
+                  type: object
+                  description: Additional parameters for the report
+                  example: {}
+      responses:
+        '200':
+          description: Report generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for authentication
+
+  schemas:
+    # Base Response Schemas
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation completed successfully"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00.000Z"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "An error occurred"
+        error:
+          type: string
+          example: "VALIDATION_ERROR"
+        code:
+          type: string
+          example: "INVALID_INPUT"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00.000Z"
+
+    # Authentication Schemas
+    AuthResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                user:
+                  $ref: '#/components/schemas/User'
+                tokens:
+                  $ref: '#/components/schemas/AuthTokens'
+
+    LoginResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                user:
+                  $ref: '#/components/schemas/User'
+                companies:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Company'
+                tokens:
+                  $ref: '#/components/schemas/AuthTokens'
+
+    TokenResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/AuthTokens'
+
+    AuthTokens:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refreshToken:
+          type: string
+          description: JWT refresh token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    # User Schemas
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        phone:
+          type: string
+          example: "+250780123456"
+        role:
+          type: string
+          enum: [owner, admin, manager, employee]
+          example: "owner"
+        permissions:
+          type: array
+          items:
+            type: string
+          example: ["read", "write", "delete"]
+        isActive:
+          type: boolean
+          example: true
+        isEmailVerified:
+          type: boolean
+          example: false
+        lastLoginAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00.000Z"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00.000Z"
+
+    UserProfileResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                user:
+                  $ref: '#/components/schemas/User'
+                companies:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Company'
+
+    # Company Schemas
+    Company:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          example: "Acme Corporation Ltd"
+        businessType:
+          type: string
+          enum: [Ltd, SARL, Cooperative, Partnership, Sole Proprietorship, Branch, Other]
+          example: "Ltd"
+        tin:
+          type: string
+          example: "123456789"
+        vatNumber:
+          type: string
+          example: "VAT123456"
+        rdbRegistration:
+          type: string
+          example: "RDB123456"
+        address:
+          $ref: '#/components/schemas/Address'
+        phone:
+          type: string
+          example: "+250780123456"
+        email:
+          type: string
+          format: email
+          example: "info@acme.com"
+        website:
+          type: string
+          format: uri
+          example: "https://acme.com"
+        industry:
+          type: string
+          example: "Technology"
+        size:
+          type: string
+          enum: [Micro, Small, Medium, Large]
+          example: "Medium"
+        isActive:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00.000Z"
+
+    Address:
+      type: object
+      properties:
+        street:
+          type: string
+          example: "123 Main Street"
+        city:
+          type: string
+          example: "Kigali"
+        district:
+          type: string
+          example: "Gasabo"
+        sector:
+          type: string
+          example: "Kimihurura"
+        cell:
+          type: string
+          example: "Kimihurura"
+        postalCode:
+          type: string
+          example: "250"
+
+    CompanyResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                company:
+                  $ref: '#/components/schemas/Company'
+
+    CompanyDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                company:
+                  allOf:
+                    - $ref: '#/components/schemas/Company'
+                    - type: object
+                      properties:
+                        users:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/User'
+
+    CompaniesResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                companies:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Company'
+
+    # Employee Schemas
+    Employee:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        firstName:
+          type: string
+          example: "Jane"
+        lastName:
+          type: string
+          example: "Smith"
+        email:
+          type: string
+          format: email
+          example: "jane.smith@acme.com"
+        phone:
+          type: string
+          example: "+250780123456"
+        position:
+          type: string
+          example: "Software Engineer"
+        department:
+          type: string
+          example: "Engineering"
+        salary:
+          type: number
+          example: 500000
+        hireDate:
+          type: string
+          format: date
+          example: "2023-01-15"
+        isActive:
+          type: boolean
+          example: true
+        companyId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+
+    EmployeesResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                employees:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Employee'
+
+    # Tax Schemas
+    TaxReturn:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "1"
+        companyId:
+          type: string
+          example: "1"
+        period:
+          type: string
+          pattern: '^\d{4}-\d{2}$'
+          example: "2024-01"
+        type:
+          type: string
+          enum: [VAT, Corporate, Withholding, RSSB]
+          example: "VAT"
+        amount:
+          type: number
+          example: 1800000
+        paidAmount:
+          type: number
+          example: 1800000
+        dueDate:
+          type: string
+          format: date
+          example: "2024-02-15"
+        submissionDate:
+          type: string
+          format: date
+          nullable: true
+          example: "2024-02-10"
+        status:
+          type: string
+          enum: [pending, submitted, paid, overdue]
+          example: "submitted"
+        reference:
+          type: string
+          example: "VAT-2024-001"
+        description:
+          type: string
+          example: "VAT Return for January 2024"
+
+    TaxReturnsResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                returns:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/TaxReturn'
+
+    TaxRates:
+      type: object
+      properties:
+        VAT:
+          type: number
+          example: 18
+        Corporate:
+          type: number
+          example: 30
+        Withholding:
+          type: number
+          example: 15
+        RSSB_Employee:
+          type: number
+          example: 5
+        RSSB_Employer:
+          type: number
+          example: 10
+
+    TaxRatesResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/TaxRates'
+
+    TaxCalculation:
+      type: object
+      properties:
+        type:
+          type: string
+          example: "VAT"
+        baseAmount:
+          type: number
+          example: 1000000
+        rate:
+          type: number
+          example: 18
+        taxAmount:
+          type: number
+          example: 180000
+        totalAmount:
+          type: number
+          example: 1180000
+        period:
+          type: string
+          example: "2024-01"
+
+    TaxCalculationResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/TaxCalculation'
+
+    # Compliance Schemas
+    ComplianceAlert:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        type:
+          type: string
+          enum: [tax_due, compliance_deadline, regulatory_update, audit_required]
+          example: "tax_due"
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          example: "high"
+        title:
+          type: string
+          example: "VAT Payment Due"
+        message:
+          type: string
+          example: "VAT payment for January 2024 is due on February 15th"
+        dueDate:
+          type: string
+          format: date
+          example: "2024-02-15"
+        isRead:
+          type: boolean
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00.000Z"
+
+    ComplianceAlertsResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                alerts:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ComplianceAlert'
+
+    ComplianceStatus:
+      type: object
+      properties:
+        overall:
+          type: string
+          enum: [compliant, partially_compliant, non_compliant]
+          example: "compliant"
+        score:
+          type: number
+          minimum: 0
+          maximum: 100
+          example: 85
+        categories:
+          type: object
+          properties:
+            tax:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [compliant, partially_compliant, non_compliant]
+                score:
+                  type: number
+            employment:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [compliant, partially_compliant, non_compliant]
+                score:
+                  type: number
+            regulatory:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [compliant, partially_compliant, non_compliant]
+                score:
+                  type: number
+
+    ComplianceStatusResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/ComplianceStatus'
+
+    # Notification Schemas
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        type:
+          type: string
+          enum: [info, warning, error, success]
+          example: "info"
+        title:
+          type: string
+          example: "New Employee Added"
+        message:
+          type: string
+          example: "Jane Smith has been added to the Engineering department"
+        isRead:
+          type: boolean
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00.000Z"
+
+    NotificationsResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                notifications:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Notification'
+
+    # Report Schemas
+    Report:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        type:
+          type: string
+          enum: [financial, employee, tax, compliance, summary]
+          example: "financial"
+        title:
+          type: string
+          example: "Financial Report Q1 2024"
+        data:
+          type: object
+          description: Report data structure varies by type
+        generatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00.000Z"
+        format:
+          type: string
+          enum: [json, pdf, excel]
+          example: "json"
+
+    ReportsListResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                reports:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Report'
+
+    ReportResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Report'
+
+# Additional Information
+externalDocs:
+  description: Office Nexus Documentation
+  url: https://docs.officenexus.com

@@ -107,6 +107,8 @@ app.use(cors({
       "http://localhost:8080",
       "http://localhost:3000",
       "http://localhost:5174",
+      "https://business-management-system-em23.vercel.app",
+      /^https:\/\/.*\.vercel\.app$/,  
       // Render.com domains
       /^https:\/\/.*\.onrender\.com$/,
       /^https:\/\/.*\.render\.com$/
