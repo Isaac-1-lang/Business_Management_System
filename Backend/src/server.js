@@ -105,8 +105,6 @@ app.use(cors({
     const allowedOrigins = [
       process.env.FRONTEND_URL || "http://localhost:5173",
       "http://localhost:8080",
-      "http://localhost:3000",
-      "http://localhost:5174",
       "https://business-management-system-em23.vercel.app",
       /^https:\/\/.*\.vercel\.app$/,  
       // Render.com domains
