@@ -68,121 +68,50 @@ export const CHART_OF_ACCOUNTS = {
   '5008': 'Other Expenses'
 };
 
+import { apiService } from './apiService';
+
 class TransactionEngine {
   private static generalLedger: GLEntry[] = [];
   
-  static loadGeneralLedger(): void {
-    const stored = localStorage.getItem('general-ledger');
-    if (stored) {
-      this.generalLedger = JSON.parse(stored);
+  static async refreshGeneralLedger(params?: { startDate?: string; endDate?: string }): Promise<GLEntry[]> {
+    const res = await apiService.getAccountingLedger(params);
+    if (res.success && res.data?.ledger) {
+      // Backend returns aggregated ledger; keep for compatibility if needed
+      // Here we keep a flat cache for simplicity; consumers should read from API when possible
+      return res.data.ledger as GLEntry[];
     }
+    console.warn('Failed to fetch ledger from API:', res.error || res.message);
+    return [];
   }
 
-  static saveGeneralLedger(): void {
-    localStorage.setItem('general-ledger', JSON.stringify(this.generalLedger));
+  static async postTransaction(_transaction: Transaction): Promise<void> {
+    // Posting individual journal entries is now backend responsibility via transaction creation
+    console.warn('TransactionEngine.postTransaction is deprecated; create accounting transactions via API.');
   }
-
-  static postTransaction(transaction: Transaction): void {
-    this.loadGeneralLedger();
-    
-    const { date, reference, description, source_id, source_type, entries } = transaction;
-    
-    // Validate entries balance
-    const totalDebits = entries.reduce((sum, entry) => sum + (entry.debit || 0), 0);
-    const totalCredits = entries.reduce((sum, entry) => sum + (entry.credit || 0), 0);
-    
-    if (Math.abs(totalDebits - totalCredits) > 0.01) {
-      throw new Error('Transaction does not balance: Debits must equal Credits');
+  
+  static async getGeneralLedger(): Promise<GLEntry[]> {
+    return this.refreshGeneralLedger();
+  }
+  
+  static async getTrialBalance(asOfDate?: string): Promise<{ account_code: string; account_name: string; debit: number; credit: number; balance: number }[]> {
+    const res = await apiService.getTrialBalance({ asOfDate });
+    if (res.success && res.data?.trialBalance) {
+      return res.data.trialBalance;
     }
-    
-    // Check for duplicate source transactions
-    const existingTransaction = this.generalLedger.find(
-      entry => entry.source_id === source_id && entry.source_type === source_type
-    );
-    
-    if (existingTransaction) {
-      console.warn(`Transaction already exists for ${source_type} ${source_id}`);
-      return;
-    }
-    
-    // Post entries to general ledger
-    entries.forEach(entry => {
-      const glEntry: GLEntry = {
-        id: `GL-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        date,
-        account_code: entry.account_code,
-        account_name: entry.account_name || CHART_OF_ACCOUNTS[entry.account_code] || 'Unknown Account',
-        debit: entry.debit || 0,
-        credit: entry.credit || 0,
-        reference,
-        description,
-        source_id,
-        source_type,
-        user_id: 'current-user', // Would come from auth context
-        created_at: new Date().toISOString()
-      };
-      
-      this.generalLedger.push(glEntry);
-    });
-    
-    this.saveGeneralLedger();
-    console.log(`Posted ${entries.length} entries to General Ledger for ${source_type} ${source_id}`);
+    console.warn('Failed to fetch trial balance:', res.error || res.message);
+    return [];
   }
   
-  static getGeneralLedger(): GLEntry[] {
-    this.loadGeneralLedger();
-    return [...this.generalLedger].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  static async getAccountBalance(accountCode: string, asOfDate?: string): Promise<number> {
+    const trial = await this.getTrialBalance(asOfDate);
+    const row = trial.find(r => r.account_code === accountCode);
+    return row ? row.balance : 0;
   }
   
-  static getTrialBalance(asOfDate?: string): { account_code: string; account_name: string; debit: number; credit: number; balance: number }[] {
-    this.loadGeneralLedger();
-    const cutoffDate = asOfDate ? new Date(asOfDate) : new Date();
-    
-    const balances = new Map<string, { account_name: string; debit: number; credit: number }>();
-    
-    this.generalLedger
-      .filter(entry => new Date(entry.date) <= cutoffDate)
-      .forEach(entry => {
-        const existing = balances.get(entry.account_code) || { 
-          account_name: entry.account_name, 
-          debit: 0, 
-          credit: 0 
-        };
-        
-        existing.debit += entry.debit;
-        existing.credit += entry.credit;
-        balances.set(entry.account_code, existing);
-      });
-    
-    return Array.from(balances.entries())
-      .map(([account_code, data]) => ({
-        account_code,
-        account_name: data.account_name,
-        debit: data.debit,
-        credit: data.credit,
-        balance: data.debit - data.credit
-      }))
-      .sort((a, b) => a.account_code.localeCompare(b.account_code));
-  }
-  
-  static getAccountBalance(accountCode: string, asOfDate?: string): number {
-    this.loadGeneralLedger();
-    const cutoffDate = asOfDate ? new Date(asOfDate) : new Date();
-    
-    const entries = this.generalLedger.filter(
-      entry => entry.account_code === accountCode && new Date(entry.date) <= cutoffDate
-    );
-    
-    return entries.reduce((balance, entry) => balance + entry.debit - entry.credit, 0);
-  }
-  
-  static getAuditTrail(sourceType?: GLEntry['source_type'], sourceId?: string): GLEntry[] {
-    this.loadGeneralLedger();
-    return this.generalLedger.filter(entry => {
-      if (sourceType && entry.source_type !== sourceType) return false;
-      if (sourceId && entry.source_id !== sourceId) return false;
-      return true;
-    });
+  static async getAuditTrail(_sourceType?: GLEntry['source_type'], _sourceId?: string): Promise<GLEntry[]> {
+    // Not supported via API yet; return empty or implement an endpoint
+    console.warn('getAuditTrail via TransactionEngine is not available via API yet.');
+    return [];
   }
 }
 

@@ -1,5 +1,6 @@
 import TransactionEngine from './transactionEngine';
 import DataIntegrationService from './dataIntegrationService';
+import { apiService } from './apiService';
 
 export interface UniversalTransaction {
   id: string;
@@ -41,52 +42,41 @@ export interface UniversalTransaction {
 class UniversalTransactionService {
   private static transactions: UniversalTransaction[] = [];
 
-  static loadTransactions(): void {
-    const stored = localStorage.getItem('universal-transactions');
-    if (stored) {
-      this.transactions = JSON.parse(stored);
+  // Fetch transactions from backend
+  static async fetchTransactions(params?: { type?: string; startDate?: string; endDate?: string; page?: number; limit?: number; }): Promise<UniversalTransaction[]> {
+    const res = await apiService.getAccountingTransactions(params);
+    if (res.success && Array.isArray(res.data)) {
+      // Assume backend returns normalized transactions
+      this.transactions = res.data as unknown as UniversalTransaction[];
+      return this.transactions;
     }
+    console.warn('Failed to load transactions from API:', res.error || res.message);
+    return [];
   }
 
-  static createTransaction(data: Omit<UniversalTransaction, 'id' | 'created_at'> & { company_id?: string }): UniversalTransaction {
-    this.loadTransactions();
-    
-    const transaction: UniversalTransaction = {
-      ...data,
-      id: `txn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      company_id: data.company_id || localStorage.getItem('selectedCompanyId') || 'comp-001',
-      created_at: new Date().toISOString()
-    };
-
-    this.transactions.push(transaction);
-    
-    // Auto-post to accounting system
-    this.postToAccounting(transaction);
-    
-    // Store in localStorage for persistence
-    localStorage.setItem('universal-transactions', JSON.stringify(this.transactions));
-    
-    // Notify integration service
-    DataIntegrationService.notify('transactions', this.transactions);
-    
-    console.log('Universal transaction created and posted to accounting:', transaction);
-    
-    return transaction;
+  static async createTransaction(data: Omit<UniversalTransaction, 'id' | 'created_at'> & { company_id?: string }): Promise<UniversalTransaction | null> {
+    // Move creation to backend
+    const payload = { ...data };
+    const res = await apiService.createAccountingTransaction(payload);
+    if (res.success && res.data) {
+      const created = res.data as unknown as UniversalTransaction;
+      // Notify integration service (frontend-only consumers)
+      DataIntegrationService.notify('transactions', [created, ...this.transactions]);
+      console.log('Universal transaction created via API:', created);
+      return created;
+    }
+    console.error('Failed to create transaction via API:', res.error || res.message);
+    return null;
   }
 
   static getAllTransactions(): UniversalTransaction[] {
-    this.loadTransactions();
-    const currentCompanyId = localStorage.getItem('selectedCompanyId') || 'comp-001';
-    return this.transactions
-      .filter(t => t.company_id === currentCompanyId)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    // Return cached set (should be populated by fetchTransactions)
+    return [...this.transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
 
-  static postTransaction(transaction: UniversalTransaction): void {
-    this.transactions.push(transaction);
-    this.postToAccounting(transaction);
-    localStorage.setItem('universal-transactions', JSON.stringify(this.transactions));
-    DataIntegrationService.notify('transactions', this.transactions);
+  static postTransaction(_transaction: UniversalTransaction): void {
+    // Deprecated: posting is handled by backend on create
+    console.warn('postTransaction is deprecated. Use createTransaction (API) instead.');
   }
 
   private static postToAccounting(transaction: UniversalTransaction): void {
@@ -247,19 +237,12 @@ class UniversalTransactionService {
     return this.getAllTransactions().filter(t => t.date >= startDate && t.date <= endDate);
   }
 
-  static updateTransactionStatus(id: string, status: UniversalTransaction['status']): void {
-    const transaction = this.transactions.find(t => t.id === id);
-    if (transaction) {
-      transaction.status = status;
-      localStorage.setItem('universal-transactions', JSON.stringify(this.transactions));
-      DataIntegrationService.notify('transactions', this.transactions);
-    }
+  static updateTransactionStatus(_id: string, _status: UniversalTransaction['status']): void {
+    console.warn('updateTransactionStatus is now backend-managed. Add an API endpoint if needed.');
   }
 
-  static deleteTransaction(id: string): void {
-    this.transactions = this.transactions.filter(t => t.id !== id);
-    localStorage.setItem('universal-transactions', JSON.stringify(this.transactions));
-    DataIntegrationService.notify('transactions', this.transactions);
+  static deleteTransaction(_id: string): void {
+    console.warn('deleteTransaction should be implemented via backend API.');
   }
 
   static getIncomeBreakdown(fromDate: string, toDate: string): Array<{

@@ -1,5 +1,5 @@
 /**
- * MAIN SERVER FILE - Office Nexus Backend
+ * MAIN SERVER FILE - Intego Office Backend
  * 
  * This is the entry point for the backend API server.
  * It sets up Express, middleware, routes, and Socket.io for real-time features.
@@ -46,6 +46,7 @@ import taxRoutes from './routes/tax.js';
 import accountingRoutes from './routes/accounting.js';
 import complianceRoutes from './routes/compliance.js';
 import notificationRoutes from './routes/notification.js';
+import dividendRoutes from './routes/dividends.js';
 import reportRoutes from './routes/reports.js';
 
 // Import model associations
@@ -195,6 +196,7 @@ app.use(`${API_PREFIX}/tax`, authMiddleware, taxRoutes);
 app.use(`${API_PREFIX}/accounting`, authMiddleware, accountingRoutes);
 app.use(`${API_PREFIX}/compliance`, authMiddleware, complianceRoutes);
 app.use(`${API_PREFIX}/notifications`, authMiddleware, notificationRoutes);
+app.use(`${API_PREFIX}/dividends`, authMiddleware, dividendRoutes);
 app.use(`${API_PREFIX}/reports`, authMiddleware, reportRoutes);
 
 // ==================== SOCKET.IO SETUP ====================
@@ -220,7 +222,7 @@ app.use(errorHandler);
 
 async function startServer() {
   try {
-    console.log('Starting Office Nexus Backend Server...');
+    console.log('Starting Intego Office Backend Server...');
     
     // Connect to database
     await connectDatabase();

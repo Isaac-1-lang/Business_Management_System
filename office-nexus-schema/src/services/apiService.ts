@@ -325,6 +325,93 @@ class ApiService {
     return this.request('/health');
   }
 
+  // Accounting - Transactions
+  async getAccountingTransactions(params?: {
+    type?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any[]>> {
+    const query = new URLSearchParams();
+    if (params?.type) query.set('type', params.type);
+    if (params?.startDate) query.set('startDate', params.startDate);
+    if (params?.endDate) query.set('endDate', params.endDate);
+    if (params?.page !== undefined) query.set('page', String(params.page));
+    if (params?.limit !== undefined) query.set('limit', String(params.limit));
+    const qs = query.toString();
+    const endpoint = qs ? `/accounting/transactions?${qs}` : '/accounting/transactions';
+    return this.request(endpoint);
+  }
+
+  async getAccountingTransaction(id: string): Promise<ApiResponse<any>> {
+    return this.request(`/accounting/transactions/${id}`);
+  }
+
+  async createAccountingTransaction(payload: any): Promise<ApiResponse<any>> {
+    return this.request('/accounting/transactions', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  // Accounting - Ledger & Reports
+  async getAccountingLedger(params?: { startDate?: string; endDate?: string }): Promise<ApiResponse<any>> {
+    const query = new URLSearchParams();
+    if (params?.startDate) query.set('startDate', params.startDate);
+    if (params?.endDate) query.set('endDate', params.endDate);
+    const qs = query.toString();
+    const endpoint = qs ? `/accounting/ledger?${qs}` : '/accounting/ledger';
+    return this.request(endpoint);
+  }
+
+  async getTrialBalance(params?: { asOfDate?: string }): Promise<ApiResponse<any>> {
+    // Backend supports startDate/endDate; we map asOfDate to endDate for convenience
+    const query = new URLSearchParams();
+    if (params?.asOfDate) query.set('endDate', params.asOfDate);
+    const qs = query.toString();
+    const endpoint = qs ? `/accounting/trial-balance?${qs}` : '/accounting/trial-balance';
+    return this.request(endpoint);
+  }
+
+  async getAccountingStats(): Promise<ApiResponse<any>> {
+    return this.request('/accounting/stats');
+  }
+
+  // Dividends
+  async getDividendDeclarations(): Promise<ApiResponse<{ declarations: any[] }>> {
+    return this.request('/dividends');
+  }
+
+  async createDividendDeclaration(payload: any): Promise<ApiResponse<{ declaration: any }>> {
+    return this.request('/dividends', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  async confirmDividendDeclaration(id: string): Promise<ApiResponse<{ declaration: any }>> {
+    return this.request(`/dividends/${id}/confirm`, { method: 'POST' });
+  }
+
+  async calculateDividendDistributions(id: string, shareholders: any[]): Promise<ApiResponse<{ distributions: any[] }>> {
+    return this.request(`/dividends/${id}/distributions/calculate`, {
+      method: 'POST',
+      body: JSON.stringify({ shareholders })
+    });
+  }
+
+  async getDividendDistributions(id: string): Promise<ApiResponse<{ distributions: any[] }>> {
+    return this.request(`/dividends/${id}/distributions`);
+  }
+
+  async payDividend(distributionId: string, payment_proof_url?: string): Promise<ApiResponse<{ distribution: any }>> {
+    return this.request(`/dividends/distributions/${distributionId}/pay`, {
+      method: 'POST',
+      body: JSON.stringify({ payment_proof_url })
+    });
+  }
+
   // Utility Methods
   isAuthenticated(): boolean {
     return !!this.accessToken;
