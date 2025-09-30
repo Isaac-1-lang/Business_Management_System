@@ -7,14 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { 
   TrendingUp, 
   TrendingDown, 
-  DollarSign, 
-  Users, 
-  Building, 
+  DollarSign,  
   Target,
   BarChart3,
   PieChart,
   Activity,
-  Calendar
 } from 'lucide-react';
 import { 
   LineChart, 
