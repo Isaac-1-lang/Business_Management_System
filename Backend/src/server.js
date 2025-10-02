@@ -29,6 +29,14 @@ import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { neon } from '@neondatabase/serverless';
+import swaggerUi from 'swagger-ui-express';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+// Get current directory for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 // Import middleware and utilities
 import { errorHandler } from './middleware/errorHandler.js';
 import { authMiddleware } from './middleware/auth.js';
@@ -64,6 +72,16 @@ import './models/associations.js';
 
 // Load environment variables
 dotenv.config();
+
+// Load Swagger documentation synchronously at startup
+let swaggerDocument;
+try {
+  const swaggerPath = join(__dirname, '..', 'swagger.yaml');
+  const swaggerFile = readFileSync(swaggerPath, 'utf8');
+  // We'll load js-yaml dynamically when needed
+} catch (error) {
+  console.warn('Could not find swagger.yaml:', error.message);
+}
 
 const app = express();
 const server = createServer(app);
@@ -188,6 +206,40 @@ app.get('/api/v1/health', (req, res) => {
       uptime: process.uptime()
     }
   });
+});
+
+// ==================== SWAGGER DOCUMENTATION ====================
+
+// Setup Swagger UI route
+app.use('/api-docs', swaggerUi.serve);
+app.get('/api-docs', async (req, res) => {
+  try {
+    if (!swaggerDocument) {
+      const swaggerPath = join(__dirname, '..', 'swagger.yaml');
+      const swaggerFile = readFileSync(swaggerPath, 'utf8');
+      const yaml = await import('js-yaml');
+      swaggerDocument = yaml.load(swaggerFile);
+    }
+    
+    const html = swaggerUi.generateHTML(swaggerDocument, {
+      explorer: true,
+      customCss: '.swagger-ui .topbar { display: none }',
+      customSiteTitle: "Intego Office API Documentation"
+    });
+    res.send(html);
+  } catch (error) {
+    console.error('Error loading Swagger documentation:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Swagger documentation not available',
+      error: error.message
+    });
+  }
+});
+
+// Redirect root to API docs for convenience
+app.get('/', (req, res) => {
+  res.redirect('/api-docs');
 });
 
 // ==================== API ROUTES ====================
