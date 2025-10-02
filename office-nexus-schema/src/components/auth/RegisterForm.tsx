@@ -70,8 +70,8 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
 
   // Validate password strength
   const validatePasswordStrength = (password: string): { isValid: boolean; message: string } => {
-    if (password.length < 8) {
-      return { isValid: false, message: 'Password must be at least 8 characters long' };
+    if (password.length < 6) {
+      return { isValid: false, message: 'Password must be at least 6 characters long' };
     }
     if (!/(?=.*[a-z])/.test(password)) {
       return { isValid: false, message: 'Password must contain at least one lowercase letter' };

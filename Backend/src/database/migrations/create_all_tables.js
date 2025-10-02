@@ -7,6 +7,198 @@
 import { DataTypes } from 'sequelize';
 
 export const up = async (queryInterface, Sequelize) => {
+  // Create Users table first (base dependency)
+  await queryInterface.createTable('users', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+      allowNull: false
+    },
+    first_name: {
+      type: DataTypes.STRING(50),
+      allowNull: false
+    },
+    last_name: {
+      type: DataTypes.STRING(50),
+      allowNull: false
+    },
+    email: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      unique: true
+    },
+    phone: {
+      type: DataTypes.STRING(20),
+      allowNull: true
+    },
+    password: {
+      type: DataTypes.STRING(255),
+      allowNull: false
+    },
+    role: {
+      type: DataTypes.ENUM('admin', 'owner', 'manager', 'accountant', 'hr', 'employee', 'viewer'),
+      allowNull: false,
+      defaultValue: 'employee'
+    },
+    permissions: {
+      type: DataTypes.JSON,
+      allowNull: false,
+      defaultValue: []
+    },
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true
+    },
+    is_email_verified: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
+    is_phone_verified: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
+    last_login_at: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    last_password_change: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW
+    },
+    created_at: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW
+    },
+    updated_at: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW
+    },
+    deleted_at: {
+      type: DataTypes.DATE,
+      allowNull: true
+    }
+  });
+
+  // Create Companies table (base dependency)
+  await queryInterface.createTable('companies', {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+      allowNull: false
+    },
+    name: {
+      type: DataTypes.STRING(200),
+      allowNull: false
+    },
+    trading_name: {
+      type: DataTypes.STRING(200),
+      allowNull: true
+    },
+    rdb_registration_number: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      unique: true
+    },
+    rdb_registration_date: {
+      type: DataTypes.DATEONLY,
+      allowNull: true
+    },
+    business_type: {
+      type: DataTypes.ENUM('Ltd', 'SARL', 'Cooperative', 'Partnership', 'Sole Proprietorship', 'Branch', 'Other'),
+      allowNull: false,
+      defaultValue: 'Ltd'
+    },
+    business_category: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    tin: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+      unique: true
+    },
+    vat_number: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+      unique: true
+    },
+    tax_regime: {
+      type: DataTypes.ENUM('Standard', 'Simplified', 'Exempt', 'Other'),
+      allowNull: false,
+      defaultValue: 'Standard'
+    },
+    currency: {
+      type: DataTypes.ENUM('RWF', 'USD', 'EUR'),
+      allowNull: false,
+      defaultValue: 'RWF'
+    },
+    address: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    city: {
+      type: DataTypes.STRING(50),
+      allowNull: true
+    },
+    district: {
+      type: DataTypes.STRING(50),
+      allowNull: true
+    },
+    country: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      defaultValue: 'Rwanda'
+    },
+    phone: {
+      type: DataTypes.STRING(20),
+      allowNull: true
+    },
+    email: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    status: {
+      type: DataTypes.ENUM('active', 'inactive', 'suspended', 'liquidated', 'merged'),
+      allowNull: false,
+      defaultValue: 'active'
+    },
+    compliance_status: {
+      type: DataTypes.ENUM('compliant', 'non_compliant', 'pending', 'under_review'),
+      allowNull: false,
+      defaultValue: 'pending'
+    },
+    created_by: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: 'users',
+        key: 'id'
+      }
+    },
+    created_at: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW
+    },
+    updated_at: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW
+    },
+    deleted_at: {
+      type: DataTypes.DATE,
+      allowNull: true
+    }
+  });
+
   // Create Persons table
   await queryInterface.createTable('persons', {
     id: {
@@ -457,4 +649,7 @@ export const down = async (queryInterface, Sequelize) => {
   await queryInterface.dropTable('early_withdrawal_requests');
   await queryInterface.dropTable('locked_capitals');
   await queryInterface.dropTable('persons');
+  // Drop base tables last
+  await queryInterface.dropTable('companies');
+  await queryInterface.dropTable('users');
 };

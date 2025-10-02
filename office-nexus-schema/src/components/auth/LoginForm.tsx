@@ -97,24 +97,6 @@ export function LoginForm({ onSuccess, onSwitchToRegister, className }: LoginFor
     }
   };
 
-  // Handle demo login
-  const handleDemoLogin = async () => {
-    setFormData({
-      email: 'admin@test.com',
-      password: 'Admin123!',
-      rememberMe: false,
-    });
-
-    const success = await login({
-      email: 'admin@test.com',
-      password: 'Admin123!',
-    });
-
-    if (success && onSuccess) {
-      onSuccess();
-    }
-  };
-
   return (
     <Card className={cn('w-full max-w-md mx-auto bg-white border-blue-200', className)}>
       <CardHeader className="space-y-1">
@@ -226,13 +208,12 @@ export function LoginForm({ onSuccess, onSwitchToRegister, className }: LoginFor
             )}
           </Button>
 
-          {/* Demo Login Button */}
         </form>
 
         {/* Footer Links */}
         <div className="mt-6 text-center space-y-2">
           <p className="text-sm text-blue-700">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <button
               type="button"
               onClick={onSwitchToRegister}

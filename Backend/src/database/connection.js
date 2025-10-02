@@ -86,12 +86,9 @@ export async function connectDatabase() {
       console.log('✅ Database connection established successfully.');
       console.log(`📍 Connected to: ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
       
-      // Sync database only in development
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔄 Synchronizing database schema...');
-        await sequelize.sync({ alter: true });
-        console.log('✅ Database synchronized successfully.');
-      }
+      // Note: Database schema should be managed through migrations
+      // Run migrations manually using: node run-migration.js
+      console.log('💡 To set up database schema, run: node run-migration.js');
       
       return sequelize;
       

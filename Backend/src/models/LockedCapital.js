@@ -36,7 +36,7 @@ const LockedCapital = sequelize.define('LockedCapital', {
     type: DataTypes.UUID,
     allowNull: false,
     references: {
-      model: 'investors',
+      model: 'persons',
       key: 'id'
     }
   },
