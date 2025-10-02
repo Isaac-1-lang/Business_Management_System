@@ -6,15 +6,7 @@ info:
     
     A comprehensive HR and business management system designed for Rwandan businesses.
     
-    ## Features
-    - **User Authentication & Authorization**: JWT-based authentication with role-based access control
-    - **Company Management**: Multi-company support with user associations
-    - **Employee Management**: Complete employee lifecycle management
-    - **Tax Management**: Rwanda-specific tax calculations and compliance
-    - **Accounting**: Financial records and reporting
-    - **Compliance**: Regulatory compliance monitoring and alerts
-    - **Real-time Notifications**: WebSocket-based notifications
-    - **Reporting**: Comprehensive business intelligence and reporting
+   
     
     ## Authentication
     This API uses JWT (JSON Web Tokens) for authentication. Include the token in the Authorization header:

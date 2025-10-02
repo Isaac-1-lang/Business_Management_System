@@ -9,6 +9,7 @@ import { body, validationResult } from 'express-validator';
 import { Company, User } from '../models/index.js';
 import { successResponse, errorResponse, asyncHandler } from '../middleware/errorHandler.js';
 import { requireRole, requireCompanyAccess } from '../middleware/auth.js';
+import sequelize from '../database/connection.js';
 
 const router = express.Router();
 
@@ -32,7 +33,7 @@ router.get('/', asyncHandler(async (req, res) => {
     include: [{
       model: Company,
       as: 'companies',
-      through: { attributes: ['role'] }
+      through: { attributes: [] } // Temporarily remove role until column is added
     }]
   });
 
@@ -81,8 +82,22 @@ router.post('/', createCompanyValidation, requireRole(['admin', 'owner']), async
 
   const company = await Company.create(companyData);
 
-  // Associate the current user with the company
-  await req.user.addCompany(company, { through: { role: 'owner' } });
+  // Associate the current user with the company using UserCompany junction table
+  // First, get the actual User model instance
+  const user = await User.findByPk(req.user.id);
+  if (user) {
+    // Create the association in the user_companies table
+    await sequelize.query(`
+      INSERT INTO user_companies (user_id, company_id, created_at, updated_at)
+      VALUES (:userId, :companyId, NOW(), NOW())
+      ON CONFLICT (user_id, company_id) DO NOTHING
+    `, {
+      replacements: {
+        userId: req.user.id,
+        companyId: company.id
+      }
+    });
+  }
 
   return successResponse(res, { company }, 'Company created successfully', 201);
 }));
@@ -141,7 +156,7 @@ router.get('/:id/users', requireCompanyAccess, asyncHandler(async (req, res) => 
     include: [{
       model: User,
       as: 'users',
-      through: { attributes: ['role'] },
+      through: { attributes: [] }, // Temporarily remove role until column is added
       attributes: ['id', 'firstName', 'lastName', 'email', 'role', 'isActive']
     }]
   });
@@ -177,12 +192,25 @@ router.post('/:id/users', requireCompanyAccess, requireRole(['admin', 'owner']),
   }
 
   // Check if user is already associated with the company
-  const existingAssociation = await company.hasUser(user);
-  if (existingAssociation) {
+  const existingAssociation = await sequelize.query(`
+    SELECT id FROM user_companies 
+    WHERE user_id = :userId AND company_id = :companyId
+  `, {
+    replacements: { userId, companyId: id },
+    type: sequelize.QueryTypes.SELECT
+  });
+
+  if (existingAssociation.length > 0) {
     return errorResponse(res, 'User is already associated with this company', 409, 'USER_ALREADY_ASSOCIATED');
   }
 
-  await company.addUser(user, { through: { role } });
+  // Add user to company
+  await sequelize.query(`
+    INSERT INTO user_companies (user_id, company_id, created_at, updated_at)
+    VALUES (:userId, :companyId, NOW(), NOW())
+  `, {
+    replacements: { userId, companyId: id }
+  });
 
   return successResponse(res, null, 'User added to company successfully');
 }));

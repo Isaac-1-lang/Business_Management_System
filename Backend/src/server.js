@@ -124,42 +124,42 @@ app.use(helmet({
     },
   },
 }));
+const allowedOrigins = [
+  process.env.FRONTEND_URL || "http://localhost:5173",
+  "http://localhost:8080",
+  "http://localhost:3000",
+  "http://localhost:5174",
+  "https://business-management-system-em23.vercel.app",
+  /^https:\/\/.*\.vercel\.app$/,
+  /^https:\/\/.*\.onrender\.com$/,
+  /^https:\/\/.*\.render\.com$/,
+];
 
-// CORS configuration
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (like Postman, curl)
     if (!origin) return callback(null, true);
-    
-    const allowedOrigins = [
-      process.env.FRONTEND_URL || "http://localhost:5173",
-      "http://localhost:8080",
-      "https://business-management-system-em23.vercel.app",
-      /^https:\/\/.*\.vercel\.app$/,  
-      // Render.com domains
-      /^https:\/\/.*\.onrender\.com$/,
-      /^https:\/\/.*\.render\.com$/
-    ];
-    
-    // Check if origin matches any allowed pattern
+
+    // Check if origin is in the list
     const isAllowed = allowedOrigins.some(allowed => {
-      if (typeof allowed === 'string') {
+      if (typeof allowed === "string") {
         return allowed === origin;
       } else if (allowed instanceof RegExp) {
         return allowed.test(origin);
       }
       return false;
     });
-    
+
     if (isAllowed) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      console.warn(`❌ CORS blocked request from: ${origin}`);
+      callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
 }));
 
 // Rate limiting

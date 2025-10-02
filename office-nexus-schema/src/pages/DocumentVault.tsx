@@ -34,6 +34,8 @@ import { DocumentUploadForm } from "@/components/forms/DocumentUploadForm";
 import AuditLogService from "@/services/auditLogService";
 import { DateRangeFilter } from "@/components/common/DateRangeFilter";
 import { ExportButton } from "@/components/common/ExportButton";
+import { apiService } from "@/services/apiService";
+import { useToast } from "@/hooks/use-toast";
 
 const DOCUMENT_CATEGORIES = [
   { value: "rdb-registration", label: "RDB Registration" },
@@ -46,61 +48,116 @@ const DOCUMENT_CATEGORIES = [
 ];
 
 export default function DocumentVault() {
+  const { toast } = useToast();
   const [documents, setDocuments] = useState<any[]>([]);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     loadDocuments();
   }, []);
 
-  const loadDocuments = () => {
-    const storedDocuments = localStorage.getItem("documents");
-    if (storedDocuments) {
-      setDocuments(JSON.parse(storedDocuments));
+  const loadDocuments = async () => {
+    setLoading(true);
+    try {
+      const response = await apiService.getDocuments();
+      if (response.success && response.data) {
+        setDocuments(response.data.documents || []);
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to load documents",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error loading documents:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load documents",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDocumentUpload = () => {
-    // Log the upload action - we'll get the document data from localStorage after upload
-    const storedDocuments = localStorage.getItem("documents");
-    if (storedDocuments) {
-      const allDocuments = JSON.parse(storedDocuments);
-      const latestDocument = allDocuments[0]; // Assuming newest is first
-      
-      if (latestDocument) {
+  const handleDocumentUpload = async (documentData: any) => {
+    try {
+      const response = await apiService.createDocument(documentData);
+      if (response.success && response.data) {
+        // Log the upload action
         AuditLogService.logAction({
           action_type: 'create',
           table_name: 'documents',
-          record_id: latestDocument.id.toString(),
-          description: `Document uploaded: ${latestDocument.title}`,
-          new_data: latestDocument
+          record_id: response.data.document.id.toString(),
+          description: `Document uploaded: ${response.data.document.title}`,
+          new_data: response.data.document
+        });
+
+        toast({
+          title: "Success",
+          description: "Document uploaded successfully"
+        });
+
+        await loadDocuments();
+        setShowUploadForm(false);
+      } else {
+        toast({
+          title: "Error",
+          description: response.message || "Failed to upload document",
+          variant: "destructive"
         });
       }
+    } catch (error) {
+      console.error('Error uploading document:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload document",
+        variant: "destructive"
+      });
     }
-
-    loadDocuments();
-    setShowUploadForm(false);
   };
 
-  const handleDeleteDocument = (id: number) => {
+  const handleDeleteDocument = async (id: string) => {
     const document = documents.find(doc => doc.id === id);
-    if (document) {
-      const updatedDocs = documents.filter(doc => doc.id !== id);
-      localStorage.setItem('documents', JSON.stringify(updatedDocs));
-      
-      // Log the deletion
-      AuditLogService.logAction({
-        action_type: 'delete',
-        table_name: 'documents',
-        record_id: id.toString(),
-        description: `Document deleted: ${document.title}`,
-        old_data: document
-      });
+    if (!document) return;
 
-      loadDocuments();
+    try {
+      const response = await apiService.deleteDocument(id);
+      if (response.success) {
+        // Log the deletion
+        AuditLogService.logAction({
+          action_type: 'delete',
+          table_name: 'documents',
+          record_id: id.toString(),
+          description: `Document deleted: ${document.title}`,
+          old_data: document
+        });
+
+        toast({
+          title: "Success",
+          description: "Document deleted successfully"
+        });
+
+        await loadDocuments();
+      } else {
+        toast({
+          title: "Error",
+          description: response.message || "Failed to delete document",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete document",
+        variant: "destructive"
+      });
     }
   };
 
@@ -350,7 +407,7 @@ export default function DocumentVault() {
             </DialogHeader>
             <DocumentUploadForm 
               onClose={() => setShowUploadForm(false)}
-              onSuccess={handleDocumentUpload}
+              onUpload={handleDocumentUpload}
             />
           </DialogContent>
         </Dialog>

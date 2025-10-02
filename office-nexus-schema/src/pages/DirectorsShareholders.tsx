@@ -10,6 +10,7 @@ import { ShareTransferForm } from "@/components/forms/ShareTransferForm";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ExportButton } from "@/components/common/ExportButton";
 import { useToast } from "@/hooks/use-toast";
+import { apiService } from "@/services/apiService";
 
 interface DirectorShareholder {
   id: number;
@@ -31,24 +32,57 @@ export default function DirectorsShareholders() {
   const [showTransferForm, setShowTransferForm] = useState(false);
   const [editingPerson, setEditingPerson] = useState<DirectorShareholder | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [loading, setLoading] = useState(false);
   
   const [directors, setDirectors] = useState<DirectorShareholder[]>([]);
+  const [shareholders, setShareholders] = useState<DirectorShareholder[]>([]);
 
   useEffect(() => {
-    const loadDirectors = () => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      // Load both directors and shareholders from API
+      const [directorsResponse, shareholdersResponse] = await Promise.all([
+        apiService.getDirectors(),
+        apiService.getShareholders()
+      ]);
+
+      if (directorsResponse.success && directorsResponse.data) {
+        setDirectors(directorsResponse.data.directors || []);
+      }
+
+      if (shareholdersResponse.success && shareholdersResponse.data) {
+        setShareholders(shareholdersResponse.data.shareholders || []);
+      }
+
+      // Combine directors and shareholders for display
+      const allPersons = [
+        ...(directorsResponse.data?.directors || []),
+        ...(shareholdersResponse.data?.shareholders || [])
+      ];
+      setDirectors(allPersons);
+
+    } catch (error) {
+      console.error('Error loading directors/shareholders:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load directors and shareholders data",
+        variant: "destructive"
+      });
+      
+      // Fallback to localStorage
       const stored = localStorage.getItem('directors-shareholders');
       if (stored) {
         const parsedDirectors = JSON.parse(stored);
         setDirectors(parsedDirectors);
-      } else {
-        // Initialize with empty array when no data exists
-        setDirectors([]);
-        localStorage.setItem('directors-shareholders', JSON.stringify([]));
       }
-    };
-
-    loadDirectors();
-  }, []);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const syncDirectorData = async (updatedDirectors: DirectorShareholder[]) => {
     setIsSyncing(true);
@@ -83,26 +117,52 @@ export default function DirectorsShareholders() {
   };
 
   const handleAddPerson = async (personData: any) => {
-    const newPerson: DirectorShareholder = {
-      id: Date.now(),
-      name: personData.fullName,
-      nationalId: personData.nationalId,
-      role: personData.role,
-      nationality: personData.nationality,
-      shares: personData.ownershipPercent,
-      joinDate: new Date().toISOString().split('T')[0],
-      status: "Active",
-      document: personData.document
-    };
+    try {
+      const newPersonData = {
+        name: personData.fullName,
+        nationalId: personData.nationalId,
+        role: personData.role,
+        nationality: personData.nationality,
+        shares: personData.ownershipPercent || "0",
+        joinDate: new Date().toISOString().split('T')[0],
+        status: "Active"
+      };
 
-    const updatedDirectors = [...directors, newPerson];
-    setDirectors(updatedDirectors);
-    await syncDirectorData(updatedDirectors);
+      // Determine if this is a director or shareholder based on role
+      const isDirector = ['Chairman', 'Director', 'CEO', 'Secretary'].includes(personData.role);
+      
+      let response;
+      if (isDirector) {
+        response = await apiService.createDirector(newPersonData);
+      } else {
+        response = await apiService.createShareholder(newPersonData);
+      }
+
+      if (response.success) {
+        toast({
+          title: "Success",
+          description: `${isDirector ? 'Director' : 'Shareholder'} added successfully`
+        });
+        
+        await loadData(); // Reload data from API
+      } else {
+        toast({
+          title: "Error",
+          description: response.message || "Failed to add person",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error adding person:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add person",
+        variant: "destructive"
+      });
+    }
     
-    toast({
-      title: "Success",
-      description: "Director/Shareholder added and integrated with all systems."
-    });
+    setShowForm(false);
+    setEditingPerson(null);
   };
 
   const handleEditPerson = (person: DirectorShareholder) => {

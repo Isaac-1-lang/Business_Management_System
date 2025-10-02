@@ -220,8 +220,8 @@ class ApiService {
   }
 
   // Company Methods
-  async getCompanies(): Promise<ApiResponse<Company[]>> {
-    return this.request('/companies');
+  async getCompanies(): Promise<ApiResponse<{ companies: Company[] }>> {
+    return this.makeRequest('/companies');
   }
 
   async getCompany(id: string): Promise<ApiResponse<Company>> {
@@ -466,11 +466,164 @@ class ApiService {
     return this.request(`/assets/${id}`, { method: 'DELETE' });
   }
 
+  // Documents
+  async getDocuments(): Promise<ApiResponse<{ documents: any[] }>> {
+    return this.request('/documents');
+  }
+
+  async createDocument(payload: any): Promise<ApiResponse<{ document: any }>> {
+    return this.request('/documents', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  async updateDocument(id: string, payload: any): Promise<ApiResponse<{ document: any }>> {
+    return this.request(`/documents/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  async deleteDocument(id: string): Promise<ApiResponse> {
+    return this.request(`/documents/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  async uploadDocument(formData: FormData): Promise<ApiResponse<{ document: any }>> {
+    return this.makeRequest('/documents/upload', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Authorization': `Bearer ${this.accessToken}`,
+        // Don't set Content-Type for FormData, let browser set it
+      }
+    });
+  }
+
+  // Directors & Shareholders
+  async getDirectors(): Promise<ApiResponse<{ directors: any[] }>> {
+    return this.request('/directors');
+  }
+
+  async createDirector(payload: any): Promise<ApiResponse<{ director: any }>> {
+    return this.request('/directors', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  async updateDirector(id: string, payload: any): Promise<ApiResponse<{ director: any }>> {
+    return this.request(`/directors/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  async deleteDirector(id: string): Promise<ApiResponse> {
+    return this.request(`/directors/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  async getShareholders(): Promise<ApiResponse<{ shareholders: any[] }>> {
+    return this.request('/directors/shareholders');
+  }
+
+  async createShareholder(payload: any): Promise<ApiResponse<{ shareholder: any }>> {
+    return this.request('/directors/shareholders', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  // Capital Management
+  async getLockedCapitals(): Promise<ApiResponse<{ capitals: any[] }>> {
+    return this.request('/capital/locked');
+  }
+
+  async createLockedCapital(payload: any): Promise<ApiResponse<{ capital: any }>> {
+    return this.request('/capital/locked', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  async updateLockedCapital(id: string, payload: any): Promise<ApiResponse<{ capital: any }>> {
+    return this.request(`/capital/locked/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  async getWithdrawalRequests(): Promise<ApiResponse<{ requests: any[] }>> {
+    return this.request('/capital/withdrawal-requests');
+  }
+
+  async createWithdrawalRequest(payload: any): Promise<ApiResponse<{ request: any }>> {
+    return this.request('/capital/withdrawal-requests', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  async approveWithdrawalRequest(id: string): Promise<ApiResponse<{ request: any }>> {
+    return this.request(`/capital/withdrawal-requests/${id}/approve`, {
+      method: 'POST'
+    });
+  }
+
+  async rejectWithdrawalRequest(id: string, reason?: string): Promise<ApiResponse<{ request: any }>> {
+    return this.request(`/capital/withdrawal-requests/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason })
+    });
+  }
+
+  // Currency Management
+  async getCurrencyRates(): Promise<ApiResponse<{ rates: any[] }>> {
+    return this.request('/currency/rates');
+  }
+
+  async getCurrencyTransactions(): Promise<ApiResponse<{ transactions: any[] }>> {
+    return this.request('/currency/transactions');
+  }
+
+  async createCurrencyTransaction(payload: any): Promise<ApiResponse<{ transaction: any }>> {
+    return this.request('/currency/transactions', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  // Payroll
+  async getPayrollPeriods(): Promise<ApiResponse<{ periods: any[] }>> {
+    return this.request('/payroll/periods');
+  }
+
+  async createPayrollPeriod(payload: any): Promise<ApiResponse<{ period: any }>> {
+    return this.request('/payroll/periods', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
+  async getPayrollRecords(periodId?: string): Promise<ApiResponse<{ records: any[] }>> {
+    const params = periodId ? `?periodId=${periodId}` : '';
+    return this.request(`/payroll/records${params}`);
+  }
+
+  async createPayrollRecord(payload: any): Promise<ApiResponse<{ record: any }>> {
+    return this.request('/payroll/records', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
+
   // Ownership
   async getCapital(): Promise<ApiResponse<{ capital: any[] }>> { return this.request('/ownership/capital'); }
   async saveCapital(payload: any): Promise<ApiResponse<{ capital: any }>> { return this.request('/ownership/capital', { method: 'POST', body: JSON.stringify(payload) }); }
-  async getShareholders(): Promise<ApiResponse<{ shareholders: any[] }>> { return this.request('/ownership/shareholders'); }
-  async addShareholder(payload: any): Promise<ApiResponse<{ shareholder: any }>> { return this.request('/ownership/shareholders', { method: 'POST', body: JSON.stringify(payload) }); }
   async getBeneficialOwners(): Promise<ApiResponse<{ beneficialOwners: any[] }>> { return this.request('/ownership/beneficial-owners'); }
   async addBeneficialOwner(payload: any): Promise<ApiResponse<{ beneficialOwner: any }>> { return this.request('/ownership/beneficial-owners', { method: 'POST', body: JSON.stringify(payload) }); }
 

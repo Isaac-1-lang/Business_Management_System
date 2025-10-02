@@ -61,7 +61,7 @@ router.get('/me', asyncHandler(async (req, res) => {
     include: [{
       model: Company,
       as: 'companies',
-      through: { attributes: ['role'] }
+      through: { attributes: [] } // Temporarily remove role until column is added
     }]
   });
 
@@ -87,7 +87,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
     include: [{
       model: Company,
       as: 'companies',
-      through: { attributes: ['role'] }
+      through: { attributes: [] } // Temporarily remove role until column is added
     }]
   });
 
@@ -246,7 +246,7 @@ router.get('/:id/companies', asyncHandler(async (req, res) => {
     include: [{
       model: Company,
       as: 'companies',
-      through: { attributes: ['role'] }
+      through: { attributes: [] } // Temporarily remove role until column is added
     }]
   });
 

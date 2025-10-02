@@ -30,9 +30,10 @@ const ACCESS_ROLES = [
 interface DocumentUploadFormProps {
   onClose?: () => void;
   onSuccess?: () => void;
+  onUpload?: (documentData: any) => Promise<void>;
 }
 
-export function DocumentUploadForm({ onClose, onSuccess }: DocumentUploadFormProps) {
+export function DocumentUploadForm({ onClose, onSuccess, onUpload }: DocumentUploadFormProps) {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     title: "",
@@ -74,12 +75,8 @@ export function DocumentUploadForm({ onClose, onSuccess }: DocumentUploadFormPro
     setIsUploading(true);
 
     try {
-      // Simulate file upload delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
       // Create new document entry
-      const newDocument = {
-        id: Date.now(),
+      const documentData = {
         title: formData.title,
         category: formData.category,
         description: formData.description,
@@ -87,21 +84,31 @@ export function DocumentUploadForm({ onClose, onSuccess }: DocumentUploadFormPro
         accessRole: formData.accessRole || "all",
         fileName: formData.file.name,
         fileSize: formData.file.size,
-        uploadedBy: "Current User",
-        uploadedAt: new Date().toISOString(),
         secured: formData.accessRole !== "all",
         type: getDocumentType(formData.file.name)
       };
 
-      // Store in localStorage
-      const existingDocs = JSON.parse(localStorage.getItem('documents') || '[]');
-      existingDocs.push(newDocument);
-      localStorage.setItem('documents', JSON.stringify(existingDocs));
+      // Use the onUpload callback if provided, otherwise fall back to localStorage
+      if (onUpload) {
+        await onUpload(documentData);
+      } else {
+        // Fallback to localStorage for backward compatibility
+        const newDocument = {
+          ...documentData,
+          id: Date.now(),
+          uploadedBy: "Current User",
+          uploadedAt: new Date().toISOString(),
+        };
 
-      toast({
-        title: "Document Uploaded",
-        description: `${formData.title} has been successfully uploaded to the vault.`
-      });
+        const existingDocs = JSON.parse(localStorage.getItem('documents') || '[]');
+        existingDocs.push(newDocument);
+        localStorage.setItem('documents', JSON.stringify(existingDocs));
+
+        toast({
+          title: "Document Uploaded",
+          description: `${formData.title} has been successfully uploaded to the vault.`
+        });
+      }
 
       // Reset form
       setFormData({
@@ -298,3 +305,4 @@ export function DocumentUploadForm({ onClose, onSuccess }: DocumentUploadFormPro
     </div>
   );
 }
+

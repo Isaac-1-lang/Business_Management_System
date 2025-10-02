@@ -57,10 +57,28 @@ router.post('/', meetingValidation, requireCompanyAccess, requireRole(['admin','
   const { companyId } = req;
   const payload = req.body;
   
+  // Map frontend meeting types to database ENUM values
+  const typeMapping = {
+    'Board Meeting': 'Board',
+    'Team Meeting': 'Committee',
+    'Shareholders Meeting': 'AGM',
+    'Emergency Meeting': 'EGM',
+    'Special Meeting': 'Special',
+    'Committee Meeting': 'Committee'
+  };
+  
+  // Map frontend status to database ENUM values
+  const statusMapping = {
+    'Scheduled': 'Scheduled',
+    'In Progress': 'In Progress', 
+    'Completed': 'Completed',
+    'Cancelled': 'Cancelled'
+  };
+  
   const meeting = await Meeting.create({
     company_id: companyId,
     title: payload.title,
-    type: payload.type,
+    type: typeMapping[payload.type] || 'Board', // Map to ENUM value or default
     date: payload.date,
     time: payload.time,
     location: payload.location,
@@ -72,7 +90,7 @@ router.post('/', meetingValidation, requireCompanyAccess, requireRole(['admin','
     decisions: payload.decisions || [],
     actionItems: payload.actionItems || [],
     nextMeetingDate: payload.nextMeetingDate || null,
-    status: payload.status || 'Scheduled'
+    status: statusMapping[payload.status] || 'Scheduled' // Map to ENUM value or default
   });
   
   return successResponse(res, { meeting: meeting.getPublicData() }, 'Meeting created', 201);

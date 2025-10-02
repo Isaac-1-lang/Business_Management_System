@@ -103,8 +103,17 @@ const Meeting = sequelize.define('Meeting', {
           throw new Error('Agenda must be an array');
         }
         value.forEach((item, index) => {
-          if (typeof item !== 'string' || item.trim() === '') {
-            throw new Error(`Agenda item ${index + 1} must be a non-empty string`);
+          // Accept both string and object formats
+          if (typeof item === 'string') {
+            if (item.trim() === '') {
+              throw new Error(`Agenda item ${index + 1} must be a non-empty string`);
+            }
+          } else if (typeof item === 'object' && item !== null) {
+            if (!item.description || typeof item.description !== 'string' || item.description.trim() === '') {
+              throw new Error(`Agenda item ${index + 1} must have a non-empty description`);
+            }
+          } else {
+            throw new Error(`Agenda item ${index + 1} must be a string or object with description`);
           }
         });
       }
@@ -125,8 +134,17 @@ const Meeting = sequelize.define('Meeting', {
           throw new Error('Decisions must be an array');
         }
         value.forEach((item, index) => {
-          if (typeof item !== 'string' || item.trim() === '') {
-            throw new Error(`Decision ${index + 1} must be a non-empty string`);
+          // Accept both string and object formats
+          if (typeof item === 'string') {
+            if (item.trim() === '') {
+              throw new Error(`Decision ${index + 1} must be a non-empty string`);
+            }
+          } else if (typeof item === 'object' && item !== null) {
+            if (!item.decision || typeof item.decision !== 'string' || item.decision.trim() === '') {
+              throw new Error(`Decision ${index + 1} must have a non-empty decision field`);
+            }
+          } else {
+            throw new Error(`Decision ${index + 1} must be a string or object with decision field`);
           }
         });
       }
@@ -142,8 +160,17 @@ const Meeting = sequelize.define('Meeting', {
           throw new Error('Action items must be an array');
         }
         value.forEach((item, index) => {
-          if (typeof item !== 'string' || item.trim() === '') {
-            throw new Error(`Action item ${index + 1} must be a non-empty string`);
+          // Accept both string and object formats
+          if (typeof item === 'string') {
+            if (item.trim() === '') {
+              throw new Error(`Action item ${index + 1} must be a non-empty string`);
+            }
+          } else if (typeof item === 'object' && item !== null) {
+            if (!item.task || typeof item.task !== 'string' || item.task.trim() === '') {
+              throw new Error(`Action item ${index + 1} must have a non-empty task field`);
+            }
+          } else {
+            throw new Error(`Action item ${index + 1} must be a string or object with task field`);
           }
         });
       }
