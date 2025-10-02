@@ -19,6 +19,7 @@ export default function CompanySelector() {
   const [currentCompany, setCurrentCompany] = useState<Company | null>(null);
   const [userCompanies, setUserCompanies] = useState<Company[]>([]);
   const [userRole, setUserRole] = useState<string>('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadCompanyData();
@@ -32,14 +33,31 @@ export default function CompanySelector() {
     return () => window.removeEventListener('companyChanged', handleCompanyChange);
   }, []);
 
-  const loadCompanyData = () => {
-    const current = CompanyService.getCurrentCompany();
-    const companies = CompanyService.getUserCompanies('user-001');
-    const role = current ? CompanyService.getUserRoleInCompany('user-001', current.id) : '';
+  const loadCompanyData = async () => {
+    setLoading(true);
+    try {
+      const current = CompanyService.getCurrentCompany();
+      const companies = await CompanyService.getUserCompanies('user-001');
+      const role = current ? CompanyService.getUserRoleInCompany('user-001', current.id) : '';
 
-    setCurrentCompany(current);
-    setUserCompanies(companies);
-    setUserRole(role || '');
+      setCurrentCompany(current);
+      setUserCompanies(Array.isArray(companies) ? companies : []);
+      setUserRole(role || '');
+    } catch (error) {
+      console.error('Error loading company data:', error);
+      setUserCompanies([]); // Ensure it's always an array
+      
+      // Only show error toast if it's not an authentication error
+      if (!error.message?.includes('401') && !error.message?.includes('Unauthorized')) {
+        toast({
+          title: "Error",
+          description: "Failed to load company data",
+          variant: "destructive"
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCompanySwitch = (companyId: string) => {
@@ -65,6 +83,15 @@ export default function CompanySelector() {
       default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-2 text-sm">
+        <Building2 className="w-4 h-4 text-gray-600 animate-pulse" />
+        <span className="font-medium">Loading...</span>
+      </div>
+    );
+  }
 
   if (userCompanies.length <= 1) {
     return (

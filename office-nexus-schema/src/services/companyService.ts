@@ -9,7 +9,7 @@
  * - Static methods for easy access without instantiation
  * - Local storage for persistent company selection
  * - Event-driven updates for real-time component synchronization
- * - Mock data for development (replace with actual API calls)
+ * - Real API integration with fallback to localStorage
  * 
  * KEY FEATURES:
  * 1. Company CRUD operations
@@ -64,6 +64,8 @@ export interface Company {
   updated_at: string;            // Last update timestamp
 }
 
+import { apiService } from "./apiService";
+
 // User role within a company - defines permissions and access
 export interface UserCompanyRole {
   id: string;                    // Unique role identifier
@@ -115,12 +117,27 @@ class CompanyService {
   /**
    * Get all companies that a user has access to based on their roles
    * @param userId - User ID to get companies for (defaults to 'user-001')
-   * @returns Company[] - Array of accessible companies
+   * @returns Promise<Company[]> - Array of accessible companies
    */
-  static getUserCompanies(userId: string = 'user-001'): Company[] {
-    const userRoles = this.userCompanyRoles.filter(ucr => ucr.user_id === userId);
-    const companyIds = userRoles.map(ucr => ucr.company_id);
-    return this.companies.filter(c => companyIds.includes(c.id));
+  static async getUserCompanies(userId: string = 'user-001'): Promise<Company[]> {
+    try {
+      const response = await apiService.getCompanies();
+      if (response.success && response.data) {
+        this.companies = response.data.companies || [];
+        return this.companies;
+      } else {
+        // Fallback to static data
+        const userRoles = this.userCompanyRoles.filter(ucr => ucr.user_id === userId);
+        const companyIds = userRoles.map(ucr => ucr.company_id);
+        return this.companies.filter(c => companyIds.includes(c.id));
+      }
+    } catch (error) {
+      console.error('Error fetching companies:', error);
+      // Fallback to static data
+      const userRoles = this.userCompanyRoles.filter(ucr => ucr.user_id === userId);
+      const companyIds = userRoles.map(ucr => ucr.company_id);
+      return this.companies.filter(c => companyIds.includes(c.id));
+    }
   }
 
   static getUserRoleInCompany(userId: string, companyId: string): string | null {
@@ -130,17 +147,33 @@ class CompanyService {
     return role ? role.role : null;
   }
 
-  static createCompany(companyData: Omit<Company, 'id' | 'created_at' | 'updated_at'>): Company {
-    const newCompany: Company = {
-      ...companyData,
-      id: `comp-${Date.now()}`,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    this.companies.push(newCompany);
-    console.log('Created new company:', newCompany.name);
-    return newCompany;
+  static async createCompany(companyData: Omit<Company, 'id' | 'created_at' | 'updated_at'>): Promise<Company | null> {
+    try {
+      const response = await apiService.createCompany(companyData);
+      if (response.success && response.data) {
+        const newCompany = response.data;
+        this.companies.push(newCompany);
+        console.log('Created new company:', newCompany.name);
+        return newCompany;
+      } else {
+        console.error('Failed to create company:', response.message);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error creating company:', error);
+      
+      // Fallback to local creation
+      const newCompany: Company = {
+        ...companyData,
+        id: `comp-${Date.now()}`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      this.companies.push(newCompany);
+      console.log('Created new company (fallback):', newCompany.name);
+      return newCompany;
+    }
   }
 
   static updateCompany(companyId: string, updates: Partial<Company>): Company | null {

@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Progress } from '@/components/ui/progress';
 import { Lock, Unlock, Calendar, DollarSign, AlertCircle, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiService } from '@/services/apiService';
 
 interface LockedCapital {
   id: string;
@@ -62,15 +63,38 @@ export function CapitalLockingSystem() {
     loadData();
   }, []);
 
-  const loadData = () => {
-    const saved = localStorage.getItem('locked_capitals');
-    const savedRequests = localStorage.getItem('withdrawal_requests');
-    
-    if (saved) {
-      setLockedCapitals(JSON.parse(saved));
-    }
-    if (savedRequests) {
-      setWithdrawalRequests(JSON.parse(savedRequests));
+  const loadData = async () => {
+    try {
+      const [capitalsResponse, requestsResponse] = await Promise.all([
+        apiService.getLockedCapitals(),
+        apiService.getWithdrawalRequests()
+      ]);
+
+      if (capitalsResponse.success && capitalsResponse.data) {
+        setLockedCapitals(capitalsResponse.data.capitals || []);
+      }
+
+      if (requestsResponse.success && requestsResponse.data) {
+        setWithdrawalRequests(requestsResponse.data.requests || []);
+      }
+    } catch (error) {
+      console.error('Error loading capital data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load capital data",
+        variant: "destructive"
+      });
+      
+      // Fallback to localStorage
+      const saved = localStorage.getItem('locked_capitals');
+      const savedRequests = localStorage.getItem('withdrawal_requests');
+      
+      if (saved) {
+        setLockedCapitals(JSON.parse(saved));
+      }
+      if (savedRequests) {
+        setWithdrawalRequests(JSON.parse(savedRequests));
+      }
     }
   };
 
@@ -97,7 +121,7 @@ export function CapitalLockingSystem() {
     return capital.amount * monthlyRate * monthsElapsed;
   };
 
-  const handleLockCapital = () => {
+  const handleLockCapital = async () => {
     if (!investorName || !amount || isNaN(Number(amount)) || Number(amount) <= 0) {
       toast({
         title: "Invalid Input",
@@ -107,67 +131,98 @@ export function CapitalLockingSystem() {
       return;
     }
 
-    const lockPeriodData = LOCK_PERIODS.find(p => p.value === lockPeriod);
-    const finalRoiRate = Number(baseRoiRate) + (lockPeriodData?.bonusRate || 0);
-    
-    const now = new Date().toISOString();
-    const unlockDate = calculateUnlockDate(now, Number(lockPeriod));
-    
-    const newLockedCapital: LockedCapital = {
-      id: Date.now().toString(),
-      investorId: Date.now().toString(),
-      investorName,
-      amount: Number(amount),
-      currency,
-      lockPeriod: Number(lockPeriod),
-      lockDate: now,
-      unlockDate,
-      status: 'locked',
-      roiRate: finalRoiRate,
-      accruedInterest: 0
-    };
+    try {
+      const lockPeriodData = LOCK_PERIODS.find(p => p.value === lockPeriod);
+      const finalRoiRate = Number(baseRoiRate) + (lockPeriodData?.bonusRate || 0);
+      
+      const now = new Date().toISOString();
+      const unlockDate = calculateUnlockDate(now, Number(lockPeriod));
+      
+      const capitalData = {
+        investorName,
+        amount: Number(amount),
+        currency,
+        lockPeriod: Number(lockPeriod),
+        lockDate: now,
+        unlockDate,
+        status: 'locked',
+        roiRate: finalRoiRate,
+        accruedInterest: 0
+      };
 
-    const updatedCapitals = [...lockedCapitals, newLockedCapital];
-    saveData(updatedCapitals, withdrawalRequests);
-    
-    toast({
-      title: "Capital Locked Successfully",
-      description: `${amount} ${currency} locked for ${lockPeriod} months at ${finalRoiRate}% ROI`
-    });
+      const response = await apiService.createLockedCapital(capitalData);
+      
+      if (response.success) {
+        toast({
+          title: "Capital Locked Successfully",
+          description: `${amount} ${currency} locked for ${lockPeriod} months at ${finalRoiRate}% ROI`
+        });
 
-    // Reset form
-    setInvestorName('');
-    setAmount('');
-    setShowLockDialog(false);
+        // Reset form
+        setInvestorName('');
+        setAmount('');
+        setShowLockDialog(false);
+        
+        // Reload data
+        await loadData();
+      } else {
+        toast({
+          title: "Error",
+          description: response.message || "Failed to lock capital",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error locking capital:', error);
+      toast({
+        title: "Error",
+        description: "Failed to lock capital",
+        variant: "destructive"
+      });
+    }
   };
 
-  const requestEarlyWithdrawal = (capitalId: string, reason: string) => {
+  const requestEarlyWithdrawal = async (capitalId: string, reason: string) => {
     const capital = lockedCapitals.find(c => c.id === capitalId);
     if (!capital) return;
 
-    const penaltyPercentage = 0.05; // 5% penalty
-    const penaltyAmount = capital.amount * penaltyPercentage;
-    
-    const request: EarlyWithdrawalRequest = {
-      id: Date.now().toString(),
-      lockedCapitalId: capitalId,
-      requestDate: new Date().toISOString(),
-      reason,
-      penaltyAmount,
-      status: 'pending'
-    };
+    try {
+      const penaltyPercentage = 0.05; // 5% penalty
+      const penaltyAmount = capital.amount * penaltyPercentage;
+      
+      const requestData = {
+        lockedCapitalId: capitalId,
+        requestDate: new Date().toISOString(),
+        reason,
+        penaltyAmount,
+        status: 'pending'
+      };
 
-    const updatedCapitals = lockedCapitals.map(c =>
-      c.id === capitalId ? { ...c, status: 'early_withdrawal_requested' as const } : c
-    );
-    const updatedRequests = [...withdrawalRequests, request];
-
-    saveData(updatedCapitals, updatedRequests);
-    
-    toast({
-      title: "Withdrawal Request Submitted",
-      description: `Early withdrawal request submitted with ${(penaltyPercentage * 100)}% penalty`
-    });
+      const response = await apiService.createWithdrawalRequest(requestData);
+      
+      if (response.success) {
+        toast({
+          title: "Withdrawal Request Submitted",
+          description: `Early withdrawal request submitted with ${(penaltyPercentage * 100)}% penalty`
+        });
+        
+        // Reload data to reflect changes
+        await loadData();
+      } else {
+        toast({
+          title: "Error",
+          description: response.message || "Failed to submit withdrawal request",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error submitting withdrawal request:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit withdrawal request",
+        variant: "destructive"
+      });
+    }
   };
 
   const processEarlyWithdrawal = (requestId: string, approve: boolean) => {

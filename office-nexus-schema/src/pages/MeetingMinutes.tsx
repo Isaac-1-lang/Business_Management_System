@@ -23,6 +23,7 @@ import { MeetingMinutesForm } from "@/components/forms/MeetingMinutesForm";
 import MeetingMinutesService from "@/services/meetingMinutesService";
 import type { MeetingMinutes } from "@/services/meetingMinutesService";
 import { useToast } from "@/hooks/use-toast";
+import { apiService } from "@/services/apiService";
 
 export default function MeetingMinutes() {
   const { toast } = useToast();
@@ -45,10 +46,54 @@ export default function MeetingMinutes() {
   }, [meetings, filterType, filterStatus, searchQuery]);
 
   const loadMeetings = async () => {
-    const meetingData = await MeetingMinutesService.getMeetings();
-    const stats = await MeetingMinutesService.getStatistics();
-    setMeetings(meetingData || []);
-    setStatistics(stats || {});
+    try {
+      const response = await apiService.getMeetings();
+      if (response.success && response.data) {
+        setMeetings(response.data.meetings || []);
+        
+        // Calculate statistics from the meetings data
+        const stats = calculateStatistics(response.data.meetings || []);
+        setStatistics(stats);
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to load meetings",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error loading meetings:', error);
+      toast({
+        title: "Error", 
+        description: "Failed to load meetings",
+        variant: "destructive"
+      });
+      
+      // Fallback to localStorage service
+      const meetingData = await MeetingMinutesService.getMeetings();
+      const stats = await MeetingMinutesService.getStatistics();
+      setMeetings(meetingData || []);
+      setStatistics(stats || {});
+    }
+  };
+
+  const calculateStatistics = (meetings: any[]) => {
+    const total = meetings.length;
+    const completed = meetings.filter(m => m.status === 'Completed').length;
+    const upcoming = meetings.filter(m => m.status === 'Scheduled').length;
+    const thisMonth = meetings.filter(m => {
+      const meetingDate = new Date(m.date);
+      const now = new Date();
+      return meetingDate.getMonth() === now.getMonth() && 
+             meetingDate.getFullYear() === now.getFullYear();
+    }).length;
+
+    return {
+      total,
+      completed,
+      upcoming,
+      thisMonth
+    };
   };
 
   const applyFilters = () => {
@@ -93,36 +138,68 @@ export default function MeetingMinutes() {
 
   const handleDeleteMeeting = async (id: number) => {
     if (confirm("Are you sure you want to delete this meeting?")) {
-      const success = await MeetingMinutesService.deleteMeeting(id);
-      if (success) {
+      try {
+        const response = await apiService.deleteMeeting(id);
+        if (response.success) {
+          toast({
+            title: "Success",
+            description: "Meeting deleted successfully",
+          });
+          loadMeetings();
+        } else {
+          toast({
+            title: "Error",
+            description: response.message || "Failed to delete meeting",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error('Error deleting meeting:', error);
         toast({
-          title: "Success",
-          description: "Meeting deleted successfully",
+          title: "Error",
+          description: "Failed to delete meeting",
+          variant: "destructive"
         });
-        loadMeetings();
       }
     }
   };
 
   const handleFormSubmit = async (meetingData: any) => {
     try {
+      let response;
+      
       if (editingMeeting) {
-        await MeetingMinutesService.updateMeeting(editingMeeting.id, meetingData);
-        toast({
-          title: "Success",
-          description: "Meeting updated successfully",
-        });
+        response = await apiService.updateMeeting(editingMeeting.id, meetingData);
+        if (response.success) {
+          toast({
+            title: "Success",
+            description: "Meeting updated successfully",
+          });
+        }
       } else {
-        await MeetingMinutesService.addMeeting(meetingData);
-        toast({
-          title: "Success",
-          description: "Meeting created successfully",
-        });
+        response = await apiService.createMeeting(meetingData);
+        if (response.success) {
+          toast({
+            title: "Success",
+            description: "Meeting created successfully",
+          });
+        }
       }
+
+      if (response && !response.success) {
+        toast({
+          title: "Error",
+          description: response.message || "Failed to save meeting",
+          variant: "destructive"
+        });
+        return;
+      }
+
       setShowForm(false);
       setEditingMeeting(null);
       loadMeetings();
     } catch (error) {
+      console.error('Error saving meeting:', error);
       toast({
         title: "Error",
         description: "Failed to save meeting",
