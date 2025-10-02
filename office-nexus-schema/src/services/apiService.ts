@@ -87,14 +87,46 @@ class ApiService {
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
-    this.loadTokens();
+    // Load tokens from localStorage on initialization
+    this.loadTokensFromStorage();
   }
 
-  // Token Management
-  private loadTokens(): void {
+  // Get current user's company ID dynamically
+  private async getCurrentCompanyId(): Promise<string | null> {
+    try {
+      // First check if we have a selected company in localStorage
+      const selectedCompanyId = localStorage.getItem('selectedCompanyId');
+      if (selectedCompanyId && !selectedCompanyId.includes('test-company')) {
+        return selectedCompanyId;
+      }
+
+      // If no valid company ID, fetch user info to get companies
+      const response = await this.getCurrentUser();
+      if (response.success && response.data && response.data.companies) {
+        const companies = response.data.companies;
+        if (companies.length > 0) {
+          const firstCompany = companies[0];
+          localStorage.setItem('selectedCompanyId', firstCompany.id);
+          console.log('✅ Auto-selected company:', firstCompany.name, '(ID:', firstCompany.id, ')');
+          return firstCompany.id;
+        }
+      }
+
+      // If still no company, return null
+      console.warn('⚠️ No companies found for user');
+      return null;
+    } catch (error) {
+      console.error('Error getting current company ID:', error);
+      return localStorage.getItem('selectedCompanyId');
+    }
+  }
+
+  private loadTokensFromStorage(): void {
     this.accessToken = localStorage.getItem('accessToken');
     this.refreshToken = localStorage.getItem('refreshToken');
   }
+
+  // Token Management
 
   private saveTokens(tokens: AuthTokens): void {
     this.accessToken = tokens.accessToken;
@@ -112,6 +144,9 @@ class ApiService {
 
   // Request Headers
   private getHeaders(): HeadersInit {
+    // Always refresh tokens from localStorage before making requests
+    this.loadTokensFromStorage();
+    
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
     };
@@ -219,10 +254,18 @@ class ApiService {
 
   // Authentication Methods
   async login(credentials: LoginRequest): Promise<ApiResponse<{ user: User; companies: Company[]; tokens: AuthTokens }>> {
-    return this.makeRequest('/auth/login', {
+    const response = await this.makeRequest<{ user: User; companies: Company[]; tokens: AuthTokens }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
+    
+    // If login successful, save tokens automatically
+    if (response.success && response.data && response.data.tokens) {
+      this.saveTokens(response.data.tokens);
+      console.log('✅ Login successful, tokens saved');
+    }
+    
+    return response;
   }
 
   async register(userData: RegisterRequest): Promise<ApiResponse<{ user: User; tokens: AuthTokens }>> {
@@ -439,28 +482,52 @@ class ApiService {
 
   // Meetings
   async getMeetings(): Promise<ApiResponse<{ meetings: any[] }>> {
-    // Get current company ID from localStorage
-    const companyId = localStorage.getItem('selectedCompanyId') || '871619ce-7497-4101-82f2-d8f92f469e94';
+    const companyId = await this.getCurrentCompanyId();
+    if (!companyId) {
+      return {
+        success: false,
+        message: 'No company selected or user has no companies',
+        error: 'NO_COMPANY_ACCESS'
+      };
+    }
     return this.request(`/meetings?companyId=${companyId}`);
   }
 
   async createMeeting(payload: any): Promise<ApiResponse<{ meeting: any }>> {
-    // Get current company ID from localStorage
-    const companyId = localStorage.getItem('selectedCompanyId') || 'test-company-uuid';
+    const companyId = await this.getCurrentCompanyId();
+    if (!companyId) {
+      return {
+        success: false,
+        message: 'No company selected or user has no companies',
+        error: 'NO_COMPANY_ACCESS'
+      };
+    }
     const payloadWithCompany = { ...payload, companyId };
     return this.request('/meetings', { method: 'POST', body: JSON.stringify(payloadWithCompany) });
   }
 
   async updateMeeting(id: number, payload: any): Promise<ApiResponse<{ meeting: any }>> {
-    // Get current company ID from localStorage
-    const companyId = localStorage.getItem('selectedCompanyId') || 'test-company-uuid';
+    const companyId = await this.getCurrentCompanyId();
+    if (!companyId) {
+      return {
+        success: false,
+        message: 'No company selected or user has no companies',
+        error: 'NO_COMPANY_ACCESS'
+      };
+    }
     const payloadWithCompany = { ...payload, companyId };
     return this.request(`/meetings/${id}`, { method: 'PUT', body: JSON.stringify(payloadWithCompany) });
   }
 
   async deleteMeeting(id: number): Promise<ApiResponse> {
-    // Get current company ID from localStorage
-    const companyId = localStorage.getItem('selectedCompanyId') || 'test-company-uuid';
+    const companyId = await this.getCurrentCompanyId();
+    if (!companyId) {
+      return {
+        success: false,
+        message: 'No company selected or user has no companies',
+        error: 'NO_COMPANY_ACCESS'
+      };
+    }
     return this.request(`/meetings/${id}?companyId=${companyId}`, { method: 'DELETE' });
   }
 
@@ -654,8 +721,12 @@ class ApiService {
 
   // Utility Methods
   isAuthenticated(): boolean {
+    // Always refresh tokens from localStorage
+    this.loadTokensFromStorage();
+    
     // Check for actual token first
     if (this.accessToken) {
+      console.log('✅ JWT token found, user is authenticated');
       return true;
     }
     
@@ -666,6 +737,7 @@ class ApiService {
       return true;
     }
     
+    console.log('❌ No JWT token found, user is not authenticated');
     return false;
   }
 

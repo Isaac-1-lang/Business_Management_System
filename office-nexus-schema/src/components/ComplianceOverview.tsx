@@ -24,7 +24,7 @@ export function ComplianceOverview() {
 
   const loadComplianceData = async () => {
     try {
-      const taxSummary = TaxService.getTaxSummary();
+      const taxSummary = await TaxService.getTaxSummary();
       const alerts = AlertService.getAllAlerts();
       
       // Calculate upcoming deadlines

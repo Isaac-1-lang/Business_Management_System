@@ -71,14 +71,14 @@ class TaxService {
   private static qitPayments: QITReturn[] = [];
 
   // VAT Return Generation
-  static generateVATReturn(month: string): VATReturn {
+  static async generateVATReturn(month: string): Promise<VATReturn> {
     const startDate = `${month}-01`;
     const endDate = new Date(month + '-01');
     endDate.setMonth(endDate.getMonth() + 1);
     endDate.setDate(0);
     const endDateStr = endDate.toISOString().split('T')[0];
     
-    const glEntries = TransactionEngine.getGeneralLedger().filter(
+    const glEntries = (await TransactionEngine.getGeneralLedger()).filter(
       entry => entry.date >= startDate && entry.date <= endDateStr
     );
     
@@ -293,13 +293,13 @@ class TaxService {
   }
   
   // Get Tax Summary Dashboard
-  static getTaxSummary(): TaxSummary {
+  static async getTaxSummary(): Promise<TaxSummary> {
     const currentDate = new Date();
     const currentMonth = currentDate.toISOString().slice(0, 7);
     const currentYear = currentDate.getFullYear().toString();
     const currentQuarter = this.getCurrentQuarter();
     
-    const vatReturn = this.generateVATReturn(currentMonth);
+    const vatReturn = await this.generateVATReturn(currentMonth);
     const payeReturn = this.generatePAYEReturn(currentMonth);
     const citReturn = this.generateCITReturn(currentYear);
     const qitReturn = this.generateQITReturn(currentQuarter, currentYear);

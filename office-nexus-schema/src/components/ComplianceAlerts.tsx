@@ -28,7 +28,7 @@ export function ComplianceAlerts() {
   const loadComplianceAlerts = async () => {
     try {
       const systemAlerts = AlertService.getAllAlerts();
-      const taxSummary = TaxService.getTaxSummary();
+      const taxSummary = await TaxService.getTaxSummary();
       
       // Create tax-related alerts
       const taxAlerts: ComplianceAlert[] = [];
