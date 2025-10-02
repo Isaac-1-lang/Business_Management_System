@@ -6,7 +6,7 @@
 
 import { apiService } from './apiService';
 
-export class PayrollService {
+export default class PayrollService {
   // Get all payroll periods for the current company
   static async getPayrollPeriods(filters = {}) {
     try {
