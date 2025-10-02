@@ -415,27 +415,27 @@ class ApiService {
   // Meetings
   async getMeetings(): Promise<ApiResponse<{ meetings: any[] }>> {
     // Get current company ID from localStorage
-    const companyId = localStorage.getItem('selectedCompanyId') || 'comp-001';
+    const companyId = localStorage.getItem('selectedCompanyId') || 'test-company-uuid';
     return this.request(`/meetings?companyId=${companyId}`);
   }
 
   async createMeeting(payload: any): Promise<ApiResponse<{ meeting: any }>> {
     // Get current company ID from localStorage
-    const companyId = localStorage.getItem('selectedCompanyId') || 'comp-001';
+    const companyId = localStorage.getItem('selectedCompanyId') || 'test-company-uuid';
     const payloadWithCompany = { ...payload, companyId };
     return this.request('/meetings', { method: 'POST', body: JSON.stringify(payloadWithCompany) });
   }
 
   async updateMeeting(id: number, payload: any): Promise<ApiResponse<{ meeting: any }>> {
     // Get current company ID from localStorage
-    const companyId = localStorage.getItem('selectedCompanyId') || 'comp-001';
+    const companyId = localStorage.getItem('selectedCompanyId') || 'test-company-uuid';
     const payloadWithCompany = { ...payload, companyId };
     return this.request(`/meetings/${id}`, { method: 'PUT', body: JSON.stringify(payloadWithCompany) });
   }
 
   async deleteMeeting(id: number): Promise<ApiResponse> {
     // Get current company ID from localStorage
-    const companyId = localStorage.getItem('selectedCompanyId') || 'comp-001';
+    const companyId = localStorage.getItem('selectedCompanyId') || 'test-company-uuid';
     return this.request(`/meetings/${id}?companyId=${companyId}`, { method: 'DELETE' });
   }
 

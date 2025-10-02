@@ -514,4 +514,4 @@ Company.findByBusinessType = async function(businessType) {
 };
 
 // Export the model
-export { Company };
+export default Company;

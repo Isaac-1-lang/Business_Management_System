@@ -52,6 +52,12 @@ import meetingRoutes from './routes/meetings.js';
 import invoiceRoutes from './routes/invoices.js';
 import assetRoutes from './routes/assets.js';
 import ownershipRoutes from './routes/ownership.js';
+import capitalRoutes from './routes/capital.js';
+import currencyRoutes from './routes/currency.js';
+import dividendsRoutes from './routes/dividends.js';
+import payrollRoutes from './routes/payroll.js';
+import directorsRoutes from './routes/directors.js';
+import documentsRoutes from './routes/documents.js';
 
 // Import model associations
 import './models/associations.js';
@@ -206,6 +212,12 @@ app.use(`${API_PREFIX}/meetings`, authMiddleware, meetingRoutes);
 app.use(`${API_PREFIX}/invoices`, authMiddleware, invoiceRoutes);
 app.use(`${API_PREFIX}/assets`, authMiddleware, assetRoutes);
 app.use(`${API_PREFIX}/ownership`, authMiddleware, ownershipRoutes);
+app.use(`${API_PREFIX}/capital`, authMiddleware, capitalRoutes);
+app.use(`${API_PREFIX}/currency`, authMiddleware, currencyRoutes);
+app.use(`${API_PREFIX}/dividends`, authMiddleware, dividendsRoutes);
+app.use(`${API_PREFIX}/payroll`, authMiddleware, payrollRoutes);
+app.use(`${API_PREFIX}/directors`, authMiddleware, directorsRoutes);
+app.use(`${API_PREFIX}/documents`, authMiddleware, documentsRoutes);
 
 // ==================== SOCKET.IO SETUP ====================
 

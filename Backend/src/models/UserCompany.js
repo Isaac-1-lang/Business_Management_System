@@ -141,4 +141,4 @@ UserCompany.prototype.activate = async function() {
   await this.save();
 };
 
-export { UserCompany };
+export default UserCompany;

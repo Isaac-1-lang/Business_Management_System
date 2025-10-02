@@ -9,8 +9,8 @@
  */
 
 import jwt from 'jsonwebtoken';
-import { User } from '../models/User.js';
-import { Company } from '../models/Company.js';
+import  User  from '../models/User.js';
+import  Company  from '../models/Company.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 

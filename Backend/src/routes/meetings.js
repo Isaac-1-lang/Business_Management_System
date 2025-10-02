@@ -6,7 +6,7 @@ import express from 'express';
 import { body, validationResult } from 'express-validator';
 import { successResponse, errorResponse, asyncHandler } from '../middleware/errorHandler.js';
 import { requireRole, requireCompanyAccess } from '../middleware/auth.js';
-import Meeting from '../models/Meeting.js';
+import { Meeting } from '../models/index.js';
 
 const router = express.Router();
 

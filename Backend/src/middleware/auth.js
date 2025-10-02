@@ -16,8 +16,8 @@
  */
 
 import jwt from 'jsonwebtoken';
-import { User } from '../models/User.js';
-import { Company } from '../models/Company.js';
+import  User  from '../models/User.js';
+import  Company  from '../models/Company.js';
 import { RedisService } from '../database/redis.js';
 
 // JWT configuration

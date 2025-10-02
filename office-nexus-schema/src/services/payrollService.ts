@@ -1,263 +1,173 @@
+/**
+ * PAYROLL MANAGEMENT SERVICE
+ * 
+ * Frontend service for managing payroll periods and employee payroll records
+ */
 
-export interface Employee {
-  id: number;
-  fullName: string;
-  nationalId: string;
-  email: string;
-  phone: string;
-  position: string;
-  department: string;
-  startDate: string;
-  grossSalary: number;
-  rssbNumber: string;
-  status: 'active' | 'inactive';
-  contractDocument?: string;
-}
+import { apiService } from './apiService';
 
-export interface PayrollRecord {
-  id: number;
-  employeeId: number;
-  employee: Employee;
-  month: string;
-  grossSalary: number;
-  paye: number;
-  rssbEmployee: number;
-  rssbEmployer: number;
-  netSalary: number;
-  paid: boolean;
-  generatedDate: string;
-}
-
-export interface PayrollSummary {
-  month: string;
-  totalEmployees: number;
-  totalGrossPay: number;
-  totalPaye: number;
-  totalRssbEmployee: number;
-  totalRssbEmployer: number;
-  totalNetPay: number;
-  paidCount: number;
-  unpaidCount: number;
-}
-
-class PayrollService {
-  // Empty array - replace with actual API calls in production
-  private static employees: Employee[] = [];
-  private static payrollRecords: PayrollRecord[] = [];
-
-  // Get all active employees
-  static getActiveEmployees(): Employee[] {
-    return this.employees.filter(emp => emp.status === 'active');
-  }
-
-  // Get all employees
-  static getAllEmployees(): Employee[] {
-    return this.employees;
-  }
-
-  // Add new employee
-  static addEmployee(employee: Omit<Employee, 'id'>): Employee {
-    const newEmployee = {
-      ...employee,
-      id: Math.max(...this.employees.map(e => e.id), 0) + 1
-    };
-    this.employees.push(newEmployee);
-    return newEmployee;
-  }
-
-  // Update employee
-  static updateEmployee(id: number, updates: Partial<Employee>): Employee | null {
-    const index = this.employees.findIndex(emp => emp.id === id);
-    if (index === -1) return null;
-    
-    this.employees[index] = { ...this.employees[index], ...updates };
-    return this.employees[index];
-  }
-
-  // Calculate PAYE based on Rwanda tax bands (simplified)
-  static calculatePaye(grossSalary: number): number {
-    // Simplified PAYE calculation - 15% flat rate for demo
-    // In real system, use progressive tax bands
-    const taxableAmount = Math.max(0, grossSalary - 30000); // Basic exemption
-    return Math.round(taxableAmount * 0.15);
-  }
-
-  // Calculate RSSB contributions
-  static calculateRssb(grossSalary: number): { employee: number; employer: number } {
-    const employee = Math.round(grossSalary * 0.075); // 7.5%
-    const employer = Math.round(grossSalary * 0.075); // 7.5%
-    return { employee, employer };
-  }
-
-  // Generate payroll for a specific month
-  static generatePayroll(month: string): PayrollRecord[] {
-    // Check if payroll already exists for this month
-    const existingPayroll = this.payrollRecords.filter(record => record.month === month);
-    if (existingPayroll.length > 0) {
-      throw new Error(`Payroll for ${month} already exists`);
+export class PayrollService {
+  // Get all payroll periods for the current company
+  static async getPayrollPeriods(filters = {}) {
+    try {
+      const queryParams = new URLSearchParams();
+      if (filters.status) queryParams.append('status', filters.status);
+      if (filters.year) queryParams.append('year', filters.year);
+      if (filters.page) queryParams.append('page', filters.page);
+      if (filters.limit) queryParams.append('limit', filters.limit);
+      
+      const res = await apiService.request(`/payroll/periods?${queryParams.toString()}`);
+      if (res.success && res.data) return res.data;
+      console.warn('Failed to fetch payroll periods:', res.error || res.message);
+      return { periods: [], pagination: { total: 0, page: 1, limit: 50, pages: 0 } };
+    } catch (error) {
+      console.error('Error fetching payroll periods:', error);
+      return { periods: [], pagination: { total: 0, page: 1, limit: 50, pages: 0 } };
     }
+  }
 
-    const activeEmployees = this.getActiveEmployees();
-    const newPayrollRecords: PayrollRecord[] = [];
+  // Create new payroll period
+  static async createPayrollPeriod(payload) {
+    try {
+      const res = await apiService.request('/payroll/periods', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      if (res.success && res.data) return res.data;
+      console.warn('Failed to create payroll period:', res.error || res.message);
+      return null;
+    } catch (error) {
+      console.error('Error creating payroll period:', error);
+      return null;
+    }
+  }
 
-    activeEmployees.forEach(employee => {
-      const paye = this.calculatePaye(employee.grossSalary);
-      const rssb = this.calculateRssb(employee.grossSalary);
-      const netSalary = employee.grossSalary - paye - rssb.employee;
+  // Generate payroll records for a period
+  static async generatePayrollRecords(id) {
+    try {
+      const res = await apiService.request(`/payroll/periods/${id}/generate-records`, {
+        method: 'POST'
+      });
+      if (res.success && res.data) return res.data;
+      console.warn('Failed to generate payroll records:', res.error || res.message);
+      return null;
+    } catch (error) {
+      console.error('Error generating payroll records:', error);
+      return null;
+    }
+  }
 
-      const payrollRecord: PayrollRecord = {
-        id: this.payrollRecords.length + newPayrollRecords.length + 1,
-        employeeId: employee.id,
-        employee,
-        month,
-        grossSalary: employee.grossSalary,
-        paye,
-        rssbEmployee: rssb.employee,
-        rssbEmployer: rssb.employer,
-        netSalary,
-        paid: false,
-        generatedDate: new Date().toISOString()
+  // Get payroll records
+  static async getPayrollRecords(filters = {}) {
+    try {
+      const queryParams = new URLSearchParams();
+      if (filters.payroll_period_id) queryParams.append('payroll_period_id', filters.payroll_period_id);
+      if (filters.employee_id) queryParams.append('employee_id', filters.employee_id);
+      if (filters.payment_status) queryParams.append('payment_status', filters.payment_status);
+      if (filters.page) queryParams.append('page', filters.page);
+      if (filters.limit) queryParams.append('limit', filters.limit);
+      
+      const res = await apiService.request(`/payroll/records?${queryParams.toString()}`);
+      if (res.success && res.data) return res.data;
+      console.warn('Failed to fetch payroll records:', res.error || res.message);
+      return { records: [], pagination: { total: 0, page: 1, limit: 50, pages: 0 } };
+    } catch (error) {
+      console.error('Error fetching payroll records:', error);
+      return { records: [], pagination: { total: 0, page: 1, limit: 50, pages: 0 } };
+    }
+  }
+
+  // Update payment status
+  static async updatePaymentStatus(id, paymentStatus, paymentReference) {
+    try {
+      const res = await apiService.request(`/payroll/records/${id}/payment`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          payment_status: paymentStatus,
+          payment_reference: paymentReference
+        })
+      });
+      if (res.success && res.data) return res.data;
+      console.warn('Failed to update payment status:', res.error || res.message);
+      return null;
+    } catch (error) {
+      console.error('Error updating payment status:', error);
+      return null;
+    }
+  }
+
+  // Get payroll statistics
+  static async getStatistics() {
+    try {
+      const res = await apiService.request('/payroll/statistics');
+      if (res.success && res.data) return res.data;
+      console.warn('Failed to fetch payroll statistics:', res.error || res.message);
+      return {
+        totalPeriods: 0,
+        totalEmployees: 0,
+        totalGrossPay: 0,
+        totalNetPay: 0,
+        totalTaxes: 0,
+        totalDeductions: 0,
+        byStatus: {},
+        byMonth: {},
+        monthlyTrends: []
       };
-
-      newPayrollRecords.push(payrollRecord);
-    });
-
-    // Add to records
-    this.payrollRecords.push(...newPayrollRecords);
-    return newPayrollRecords;
-  }
-
-  // Get payroll records for a specific month
-  static getPayrollByMonth(month: string): PayrollRecord[] {
-    return this.payrollRecords.filter(record => record.month === month);
-  }
-
-  // Get all payroll records
-  static getAllPayrollRecords(): PayrollRecord[] {
-    return this.payrollRecords;
-  }
-
-  // Mark payroll as paid
-  static markAsPaid(payrollId: number): boolean {
-    const record = this.payrollRecords.find(r => r.id === payrollId);
-    if (record) {
-      record.paid = true;
-      return true;
+    } catch (error) {
+      console.error('Error fetching payroll statistics:', error);
+      return {
+        totalPeriods: 0,
+        totalEmployees: 0,
+        totalGrossPay: 0,
+        totalNetPay: 0,
+        totalTaxes: 0,
+        totalDeductions: 0,
+        byStatus: {},
+        byMonth: {},
+        monthlyTrends: []
+      };
     }
-    return false;
   }
 
-  // Get payroll summary for a month
-  static getPayrollSummary(month: string): PayrollSummary | null {
-    const records = this.getPayrollByMonth(month);
-    if (records.length === 0) return null;
-
-    return {
-      month,
-      totalEmployees: records.length,
-      totalGrossPay: records.reduce((sum, r) => sum + r.grossSalary, 0),
-      totalPaye: records.reduce((sum, r) => sum + r.paye, 0),
-      totalRssbEmployee: records.reduce((sum, r) => sum + r.rssbEmployee, 0),
-      totalRssbEmployer: records.reduce((sum, r) => sum + r.rssbEmployer, 0),
-      totalNetPay: records.reduce((sum, r) => sum + r.netSalary, 0),
-      paidCount: records.filter(r => r.paid).length,
-      unpaidCount: records.filter(r => !r.paid).length
-    };
+  // Calculate gross salary
+  static calculateGrossSalary(basicSalary, overtimeAmount, totalAllowances) {
+    return basicSalary + overtimeAmount + totalAllowances;
   }
 
-  // Generate payslip data for an employee
-  static generatePayslip(payrollId: number): PayrollRecord | null {
-    return this.payrollRecords.find(r => r.id === payrollId) || null;
+  // Calculate net salary
+  static calculateNetSalary(grossSalary, totalDeductions) {
+    return grossSalary - totalDeductions;
   }
 
-  // Get months with payroll data
-  static getPayrollMonths(): string[] {
-    const months = [...new Set(this.payrollRecords.map(r => r.month))];
-    return months.sort().reverse();
-  }
-
-  // Format currency for display
-  static formatCurrency(amount: number): string {
+  // Format currency
+  static formatCurrency(amount, currency = 'RWF') {
     return new Intl.NumberFormat('en-RW', {
       style: 'currency',
-      currency: 'RWF',
-      minimumFractionDigits: 0
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
     }).format(amount);
   }
 
-  // Export payroll to CSV format
-  static exportPayrollToCSV(month: string): string {
-    const records = this.getPayrollByMonth(month);
-    if (records.length === 0) return '';
-
-    const headers = [
-      'Employee Name',
-      'National ID',
-      'Position',
-      'Department',
-      'Gross Salary',
-      'PAYE',
-      'RSSB Employee',
-      'RSSB Employer',
-      'Net Salary',
-      'Paid Status'
-    ];
-
-    const rows = records.map(record => [
-      record.employee.fullName,
-      record.employee.nationalId,
-      record.employee.position,
-      record.employee.department,
-      record.grossSalary.toString(),
-      record.paye.toString(),
-      record.rssbEmployee.toString(),
-      record.rssbEmployer.toString(),
-      record.netSalary.toString(),
-      record.paid ? 'Paid' : 'Unpaid'
-    ]);
-
-    return [headers, ...rows]
-      .map(row => row.map(cell => `"${cell}"`).join(','))
-      .join('\n');
+  // Get status color
+  static getStatusColor(status) {
+    const colors = {
+      draft: 'bg-gray-100 text-gray-800',
+      processing: 'bg-yellow-100 text-yellow-800',
+      completed: 'bg-green-100 text-green-800',
+      cancelled: 'bg-red-100 text-red-800'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
   }
 
-  // Check for upcoming compliance deadlines
-  static getComplianceAlerts(): Array<{
-    type: 'paye' | 'rssb' | 'contract_expiry';
-    message: string;
-    dueDate: string;
-    priority: 'high' | 'medium' | 'low';
-  }> {
-    const alerts = [];
-    const now = new Date();
-    const currentMonth = now.toISOString().slice(0, 7);
-
-    // Check if payroll exists for current month
-    const currentPayroll = this.getPayrollByMonth(currentMonth);
-    const nextFilingDate = new Date(now.getFullYear(), now.getMonth() + 1, 15);
-
-    if (currentPayroll.length === 0) {
-      alerts.push({
-        type: 'paye' as const,
-        message: `Payroll for ${currentMonth} not generated yet`,
-        dueDate: nextFilingDate.toISOString().split('T')[0],
-        priority: 'high' as const
-      });
-    }
-
-    // Check unpaid payrolls
-    const unpaidRecords = this.payrollRecords.filter(r => !r.paid);
-    if (unpaidRecords.length > 0) {
-      alerts.push({
-        type: 'paye' as const,
-        message: `${unpaidRecords.length} unpaid payroll records`,
-        dueDate: nextFilingDate.toISOString().split('T')[0],
-        priority: 'medium' as const
-      });
-    }
-
-    return alerts;
+  // Get status label
+  static getStatusLabel(status) {
+    const labels = {
+      draft: 'Draft',
+      processing: 'Processing',
+      completed: 'Completed',
+      cancelled: 'Cancelled'
+    };
+    return labels[status] || status;
   }
 }
-
-export default PayrollService;

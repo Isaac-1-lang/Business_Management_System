@@ -82,7 +82,7 @@ class MeetingMinutesService {
 
   static async getStatistics() {
     // Get current company ID from localStorage
-    const companyId = localStorage.getItem('selectedCompanyId') || 'comp-001';
+    const companyId = localStorage.getItem('selectedCompanyId') || 'test-company-uuid';
     const res = await apiService.request(`/meetings/statistics?companyId=${companyId}`);
     if (res.success && res.data) return res.data;
     console.warn('Failed to fetch meeting statistics:', res.error || res.message);

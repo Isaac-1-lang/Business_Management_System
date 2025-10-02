@@ -5,9 +5,18 @@
  * It should be imported and executed after all models are defined.
  */
 
-import { User } from './User.js';
-import { Company } from './Company.js';
+import  User  from './User.js';
+import  Company  from './Company.js';
 import Meeting from './Meeting.js';
+import LockedCapital from './LockedCapital.js';
+import EarlyWithdrawalRequest from './EarlyWithdrawalRequest.js';
+import { CurrencyRate, CurrencyTransaction } from './CurrencyManager.js';
+import { DividendDeclaration, DividendDistribution } from './Dividends.js';
+import { PayrollPeriod, PayrollRecord } from './Payroll.js';
+import { AssetCategory, FixedAsset, AssetMaintenance } from './Assets.js';
+import { Director, Shareholder, ShareCertificate, BeneficialOwner } from './DirectorsShareholders.js';
+import { DocumentCategory, Document, DocumentAccess, DocumentActivity } from './DocumentVault.js';
+import Person from './Person.js';
 import sequelize from '../database/connection.js';
 
 // User-Company Many-to-Many relationship with UserCompany model
@@ -92,4 +101,359 @@ Meeting.belongsTo(Company, {
   targetKey: 'id'
 });
 
-export { User, Company, Meeting };
+// Capital Management Associations
+Company.hasMany(LockedCapital, {
+  as: 'lockedCapitals',
+  foreignKey: 'company_id',
+  sourceKey: 'id'
+});
+
+LockedCapital.belongsTo(Company, {
+  as: 'company',
+  foreignKey: 'company_id',
+  targetKey: 'id'
+});
+
+LockedCapital.hasMany(EarlyWithdrawalRequest, {
+  as: 'withdrawalRequests',
+  foreignKey: 'locked_capital_id',
+  sourceKey: 'id'
+});
+
+EarlyWithdrawalRequest.belongsTo(LockedCapital, {
+  as: 'lockedCapital',
+  foreignKey: 'locked_capital_id',
+  targetKey: 'id'
+});
+
+// Currency Management Associations
+Company.hasMany(CurrencyRate, {
+  as: 'currencyRates',
+  foreignKey: 'company_id',
+  sourceKey: 'id'
+});
+
+CurrencyRate.belongsTo(Company, {
+  as: 'company',
+  foreignKey: 'company_id',
+  targetKey: 'id'
+});
+
+Company.hasMany(CurrencyTransaction, {
+  as: 'currencyTransactions',
+  foreignKey: 'company_id',
+  sourceKey: 'id'
+});
+
+CurrencyTransaction.belongsTo(Company, {
+  as: 'company',
+  foreignKey: 'company_id',
+  targetKey: 'id'
+});
+
+// Dividends Associations
+Company.hasMany(DividendDeclaration, {
+  as: 'dividendDeclarations',
+  foreignKey: 'company_id',
+  sourceKey: 'id'
+});
+
+DividendDeclaration.belongsTo(Company, {
+  as: 'company',
+  foreignKey: 'company_id',
+  targetKey: 'id'
+});
+
+DividendDeclaration.hasMany(DividendDistribution, {
+  as: 'distributions',
+  foreignKey: 'declaration_id',
+  sourceKey: 'id'
+});
+
+DividendDistribution.belongsTo(DividendDeclaration, {
+  as: 'declaration',
+  foreignKey: 'declaration_id',
+  targetKey: 'id'
+});
+
+// Payroll Associations
+Company.hasMany(PayrollPeriod, {
+  as: 'payrollPeriods',
+  foreignKey: 'company_id',
+  sourceKey: 'id'
+});
+
+PayrollPeriod.belongsTo(Company, {
+  as: 'company',
+  foreignKey: 'company_id',
+  targetKey: 'id'
+});
+
+PayrollPeriod.hasMany(PayrollRecord, {
+  as: 'payrollRecords',
+  foreignKey: 'payroll_period_id',
+  sourceKey: 'id'
+});
+
+PayrollRecord.belongsTo(PayrollPeriod, {
+  as: 'payrollPeriod',
+  foreignKey: 'payroll_period_id',
+  targetKey: 'id'
+});
+
+// Assets Associations
+Company.hasMany(AssetCategory, {
+  as: 'assetCategories',
+  foreignKey: 'company_id',
+  sourceKey: 'id'
+});
+
+AssetCategory.belongsTo(Company, {
+  as: 'company',
+  foreignKey: 'company_id',
+  targetKey: 'id'
+});
+
+AssetCategory.hasMany(FixedAsset, {
+  as: 'assets',
+  foreignKey: 'category_id',
+  sourceKey: 'id'
+});
+
+FixedAsset.belongsTo(AssetCategory, {
+  as: 'category',
+  foreignKey: 'category_id',
+  targetKey: 'id'
+});
+
+Company.hasMany(FixedAsset, {
+  as: 'fixedAssets',
+  foreignKey: 'company_id',
+  sourceKey: 'id'
+});
+
+FixedAsset.belongsTo(Company, {
+  as: 'company',
+  foreignKey: 'company_id',
+  targetKey: 'id'
+});
+
+FixedAsset.hasMany(AssetMaintenance, {
+  as: 'maintenanceRecords',
+  foreignKey: 'asset_id',
+  sourceKey: 'id'
+});
+
+AssetMaintenance.belongsTo(FixedAsset, {
+  as: 'asset',
+  foreignKey: 'asset_id',
+  targetKey: 'id'
+});
+
+// Directors and Shareholders Associations
+Company.hasMany(Person, {
+  as: 'persons',
+  foreignKey: 'company_id',
+  sourceKey: 'id'
+});
+
+Person.belongsTo(Company, {
+  as: 'company',
+  foreignKey: 'company_id',
+  targetKey: 'id'
+});
+
+Company.hasMany(Director, {
+  as: 'directors',
+  foreignKey: 'company_id',
+  sourceKey: 'id'
+});
+
+Director.belongsTo(Company, {
+  as: 'company',
+  foreignKey: 'company_id',
+  targetKey: 'id'
+});
+
+Director.belongsTo(Person, {
+  as: 'person',
+  foreignKey: 'person_id',
+  targetKey: 'id'
+});
+
+Person.hasMany(Director, {
+  as: 'directorships',
+  foreignKey: 'person_id',
+  sourceKey: 'id'
+});
+
+Company.hasMany(Shareholder, {
+  as: 'shareholders',
+  foreignKey: 'company_id',
+  sourceKey: 'id'
+});
+
+Shareholder.belongsTo(Company, {
+  as: 'company',
+  foreignKey: 'company_id',
+  targetKey: 'id'
+});
+
+Shareholder.belongsTo(Person, {
+  as: 'person',
+  foreignKey: 'person_id',
+  targetKey: 'id'
+});
+
+Person.hasMany(Shareholder, {
+  as: 'shareholdings',
+  foreignKey: 'person_id',
+  sourceKey: 'id'
+});
+
+Shareholder.hasMany(ShareCertificate, {
+  as: 'certificates',
+  foreignKey: 'shareholder_id',
+  sourceKey: 'id'
+});
+
+ShareCertificate.belongsTo(Shareholder, {
+  as: 'shareholder',
+  foreignKey: 'shareholder_id',
+  targetKey: 'id'
+});
+
+Company.hasMany(BeneficialOwner, {
+  as: 'beneficialOwners',
+  foreignKey: 'company_id',
+  sourceKey: 'id'
+});
+
+BeneficialOwner.belongsTo(Company, {
+  as: 'company',
+  foreignKey: 'company_id',
+  targetKey: 'id'
+});
+
+BeneficialOwner.belongsTo(Person, {
+  as: 'person',
+  foreignKey: 'person_id',
+  targetKey: 'id'
+});
+
+Person.hasMany(BeneficialOwner, {
+  as: 'beneficialOwnerships',
+  foreignKey: 'person_id',
+  sourceKey: 'id'
+});
+
+// Document Vault Associations
+Company.hasMany(DocumentCategory, {
+  as: 'documentCategories',
+  foreignKey: 'company_id',
+  sourceKey: 'id'
+});
+
+DocumentCategory.belongsTo(Company, {
+  as: 'company',
+  foreignKey: 'company_id',
+  targetKey: 'id'
+});
+
+DocumentCategory.hasMany(Document, {
+  as: 'documents',
+  foreignKey: 'category_id',
+  sourceKey: 'id'
+});
+
+Document.belongsTo(DocumentCategory, {
+  as: 'category',
+  foreignKey: 'category_id',
+  targetKey: 'id'
+});
+
+Company.hasMany(Document, {
+  as: 'documents',
+  foreignKey: 'company_id',
+  sourceKey: 'id'
+});
+
+Document.belongsTo(Company, {
+  as: 'company',
+  foreignKey: 'company_id',
+  targetKey: 'id'
+});
+
+Document.belongsTo(User, {
+  as: 'uploader',
+  foreignKey: 'uploaded_by',
+  targetKey: 'id'
+});
+
+User.hasMany(Document, {
+  as: 'uploadedDocuments',
+  foreignKey: 'uploaded_by',
+  sourceKey: 'id'
+});
+
+Document.hasMany(DocumentAccess, {
+  as: 'accessRecords',
+  foreignKey: 'document_id',
+  sourceKey: 'id'
+});
+
+DocumentAccess.belongsTo(Document, {
+  as: 'document',
+  foreignKey: 'document_id',
+  targetKey: 'id'
+});
+
+Document.hasMany(DocumentActivity, {
+  as: 'activities',
+  foreignKey: 'document_id',
+  sourceKey: 'id'
+});
+
+DocumentActivity.belongsTo(Document, {
+  as: 'document',
+  foreignKey: 'document_id',
+  targetKey: 'id'
+});
+
+DocumentActivity.belongsTo(User, {
+  as: 'user',
+  foreignKey: 'user_id',
+  targetKey: 'id'
+});
+
+User.hasMany(DocumentActivity, {
+  as: 'documentActivities',
+  foreignKey: 'user_id',
+  sourceKey: 'id'
+});
+
+export { 
+  User, 
+  Company, 
+  Meeting, 
+  LockedCapital, 
+  EarlyWithdrawalRequest,
+  CurrencyRate, 
+  CurrencyTransaction,
+  DividendDeclaration, 
+  DividendDistribution,
+  PayrollPeriod, 
+  PayrollRecord,
+  AssetCategory, 
+  FixedAsset, 
+  AssetMaintenance,
+  Director, 
+  Shareholder, 
+  ShareCertificate, 
+  BeneficialOwner,
+  DocumentCategory, 
+  Document, 
+  DocumentAccess, 
+  DocumentActivity,
+  Person
+};

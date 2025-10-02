@@ -6,8 +6,7 @@
 
 import express from 'express';
 import { body, validationResult } from 'express-validator';
-import { Company } from '../models/Company.js';
-import { User } from '../models/User.js';
+import { Company, User } from '../models/index.js';
 import { successResponse, errorResponse, asyncHandler } from '../middleware/errorHandler.js';
 import { requireRole, requireCompanyAccess } from '../middleware/auth.js';
 

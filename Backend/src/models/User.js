@@ -375,4 +375,4 @@ User.prototype.hasAllPermissions = function(permissions) {
 };
 
 // Export the model
-export { User };
+export default User;
