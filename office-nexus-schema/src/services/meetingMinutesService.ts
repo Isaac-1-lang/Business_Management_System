@@ -25,103 +25,74 @@ export interface MeetingMinutes {
   updatedAt: string;
 }
 
+import { apiService } from './apiService';
+
 class MeetingMinutesService {
-  private static readonly STORAGE_KEY = 'meeting-minutes';
-
-  static getMeetings(): MeetingMinutes[] {
-    const stored = localStorage.getItem(this.STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-
-    // Return empty array when no data exists
+  static async getMeetings(): Promise<MeetingMinutes[]> {
+    const res = await apiService.getMeetings();
+    if (res.success && res.data?.meetings) return res.data.meetings as MeetingMinutes[];
+    console.warn('Failed to fetch meetings:', res.error || res.message);
     return [];
   }
 
-  static saveMeetings(meetings: MeetingMinutes[]): void {
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(meetings));
+  static async addMeeting(meetingData: Omit<MeetingMinutes, 'id' | 'createdAt' | 'updatedAt'>): Promise<MeetingMinutes | null> {
+    const res = await apiService.createMeeting(meetingData);
+    if (res.success && res.data?.meeting) return res.data.meeting as MeetingMinutes;
+    console.error('Failed to create meeting:', res.error || res.message);
+    return null;
   }
 
-  static addMeeting(meetingData: Omit<MeetingMinutes, 'id' | 'createdAt' | 'updatedAt'>): MeetingMinutes {
-    const meetings = this.getMeetings();
-    const newMeeting: MeetingMinutes = {
-      ...meetingData,
-      id: Math.max(0, ...meetings.map(m => m.id)) + 1,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    meetings.unshift(newMeeting);
-    this.saveMeetings(meetings);
-    return newMeeting;
+  static async updateMeeting(id: number, meetingData: Partial<MeetingMinutes>): Promise<MeetingMinutes | null> {
+    const res = await apiService.updateMeeting(id, meetingData);
+    if (res.success && res.data?.meeting) return res.data.meeting as MeetingMinutes;
+    console.error('Failed to update meeting:', res.error || res.message);
+    return null;
   }
 
-  static updateMeeting(id: number, meetingData: Partial<MeetingMinutes>): MeetingMinutes | null {
-    const meetings = this.getMeetings();
-    const index = meetings.findIndex(m => m.id === id);
-    
-    if (index === -1) return null;
-
-    meetings[index] = {
-      ...meetings[index],
-      ...meetingData,
-      updatedAt: new Date().toISOString()
-    };
-
-    this.saveMeetings(meetings);
-    return meetings[index];
+  static async deleteMeeting(id: number): Promise<boolean> {
+    const res = await apiService.deleteMeeting(id);
+    return !!res.success;
   }
 
-  static deleteMeeting(id: number): boolean {
-    const meetings = this.getMeetings();
-    const filteredMeetings = meetings.filter(m => m.id !== id);
-    
-    if (filteredMeetings.length === meetings.length) return false;
-
-    this.saveMeetings(filteredMeetings);
-    return true;
-  }
-
-  static getMeetingById(id: number): MeetingMinutes | null {
-    const meetings = this.getMeetings();
+  static async getMeetingById(id: number): Promise<MeetingMinutes | null> {
+    const meetings = await this.getMeetings();
     return meetings.find(m => m.id === id) || null;
   }
 
-  static getMeetingsByType(type: string): MeetingMinutes[] {
-    return this.getMeetings().filter(m => m.type === type);
+  static async getMeetingsByType(type: string): Promise<MeetingMinutes[]> {
+    const meetings = await this.getMeetings();
+    return meetings.filter(m => m.type === type);
   }
 
-  static getMeetingsByStatus(status: string): MeetingMinutes[] {
-    return this.getMeetings().filter(m => m.status === status);
+  static async getMeetingsByStatus(status: string): Promise<MeetingMinutes[]> {
+    const meetings = await this.getMeetings();
+    return meetings.filter(m => m.status === status);
   }
 
-  static getMeetingsByDateRange(startDate: string, endDate: string): MeetingMinutes[] {
-    return this.getMeetings().filter(m => m.date >= startDate && m.date <= endDate);
+  static async getMeetingsByDateRange(startDate: string, endDate: string): Promise<MeetingMinutes[]> {
+    const meetings = await this.getMeetings();
+    return meetings.filter(m => m.date >= startDate && m.date <= endDate);
   }
 
-  static getUpcomingMeetings(): MeetingMinutes[] {
+  static async getUpcomingMeetings(): Promise<MeetingMinutes[]> {
     const today = new Date().toISOString().split('T')[0];
-    return this.getMeetings().filter(m => m.date >= today && m.status !== 'Completed');
+    const meetings = await this.getMeetings();
+    return meetings.filter(m => m.date >= today && m.status !== 'Completed');
   }
 
-  static getStatistics() {
-    const meetings = this.getMeetings();
-    const thisYear = new Date().getFullYear();
-    const thisMonth = new Date().getMonth();
-    
+  static async getStatistics() {
+    // Get current company ID from localStorage
+    const companyId = localStorage.getItem('selectedCompanyId') || 'comp-001';
+    const res = await apiService.request(`/meetings/statistics?companyId=${companyId}`);
+    if (res.success && res.data) return res.data;
+    console.warn('Failed to fetch meeting statistics:', res.error || res.message);
     return {
-      total: meetings.length,
-      completed: meetings.filter(m => m.status === 'Completed').length,
-      scheduled: meetings.filter(m => m.status === 'Scheduled').length,
-      thisYear: meetings.filter(m => new Date(m.date).getFullYear() === thisYear).length,
-      thisMonth: meetings.filter(m => {
-        const meetingDate = new Date(m.date);
-        return meetingDate.getFullYear() === thisYear && meetingDate.getMonth() === thisMonth;
-      }).length,
-      byType: meetings.reduce((acc, meeting) => {
-        acc[meeting.type] = (acc[meeting.type] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>)
+      total: 0,
+      completed: 0,
+      scheduled: 0,
+      thisYear: 0,
+      thisMonth: 0,
+      byType: {}
     };
   }
 }

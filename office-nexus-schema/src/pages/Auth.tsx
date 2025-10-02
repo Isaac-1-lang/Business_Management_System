@@ -43,10 +43,10 @@ export function Auth() {
         <div className="max-w-md mx-auto flex flex-col justify-center">
           <div className="mb-8">
             <h1 className="text-4xl font-bold mb-4">
-              Office Nexus
+              Intego Office 
             </h1>
             <p className="text-xl text-blue-100">
-              Complete business management solution for Rwanda
+            Igisubizo cyuzuye cyo gucunga imishinga y' Abanyarwanda
             </p>
           </div>
 
@@ -56,7 +56,7 @@ export function Auth() {
                 <Building className="h-8 w-8 text-blue-200" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-2">Company Management</h3>
+                <h3 className="text-lg font-semibold mb-2">Gucunga imishinga</h3>
                 <p className="text-blue-100">
                   Manage multiple companies, track compliance, and handle all business operations in one place.
                 </p>
@@ -68,7 +68,7 @@ export function Auth() {
                 <Users className="h-8 w-8 text-blue-200" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-2">HR & Payroll</h3>
+                <h3 className="text-lg font-semibold mb-2">Kubera k'impinduka</h3>
                 <p className="text-blue-100">
                   Complete employee management, payroll processing, and HR compliance tracking.
                 </p>
@@ -80,7 +80,7 @@ export function Auth() {
                 <Shield className="h-8 w-8 text-blue-200" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-2">Tax & Compliance</h3>
+                <h3 className="text-lg font-semibold mb-2">Z' imibare gusubiramo</h3>
                 <p className="text-blue-100">
                   Automated tax calculations, VAT returns, and compliance deadline tracking.
                 </p>
@@ -92,9 +92,10 @@ export function Auth() {
                 <TrendingUp className="h-8 w-8 text-blue-200" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-2">Financial Reports</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                Raporo y’imari</h3>
                 <p className="text-blue-100">
-                  Comprehensive financial reporting, analytics, and business insights.
+                Raporo yimari yuzuye, isesengura, nubushishozi bwubucuruzi.
                 </p>
               </div>
             </div>
@@ -102,9 +103,8 @@ export function Auth() {
 
           <div className="mt-12 p-6 bg-white/10 rounded-lg backdrop-blur-sm">
             <p className="text-sm text-blue-100">
-              "Office Nexus has transformed how we manage our business. Everything is now streamlined and compliant."
+              "Intego Office yahinduye uburyo ducunga ibikorwa byacu. Ibintu byose ubu byoroheje kandi byujuje ibisabwa."
             </p>
-            <p className="text-xs text-blue-200 mt-2">- Tech Solutions Rwanda Ltd</p>
           </div>
         </div>
       </div>
@@ -115,10 +115,10 @@ export function Auth() {
           {/* Mobile Header */}
           <div className="lg:hidden text-center mb-8">
             <h1 className="text-3xl font-bold text-blue-900 mb-2">
-              Office Nexus
+              Intego Office
             </h1>
             <p className="text-blue-700">
-              Complete business management solution
+            Igisubizo cyuzuye cyo gucunga imishinga y' Abanyarwanda
             </p>
           </div>
 
@@ -138,7 +138,7 @@ export function Auth() {
           {/* Footer */}
           <div className="mt-8 text-center">
             <p className="text-xs text-blue-600">
-              © 2024 Office Nexus. All rights reserved.
+              © 2024 Intego Office. All rights reserved.
             </p>
           </div>
         </div>

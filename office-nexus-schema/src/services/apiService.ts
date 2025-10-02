@@ -124,7 +124,7 @@ class ApiService {
   }
 
   // HTTP Request Helper
-  private async request<T>(
+  private async makeRequest<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
@@ -194,21 +194,21 @@ class ApiService {
 
   // Authentication Methods
   async login(credentials: LoginRequest): Promise<ApiResponse<{ user: User; companies: Company[]; tokens: AuthTokens }>> {
-    return this.request('/auth/login', {
+    return this.makeRequest('/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
   }
 
   async register(userData: RegisterRequest): Promise<ApiResponse<{ user: User; tokens: AuthTokens }>> {
-    return this.request('/auth/register', {
+    return this.makeRequest('/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
   }
 
   async logout(): Promise<ApiResponse> {
-    const response = await this.request('/auth/logout', {
+    const response = await this.makeRequest('/auth/logout', {
       method: 'POST',
     });
     this.clearTokens();
@@ -216,7 +216,7 @@ class ApiService {
   }
 
   async getCurrentUser(): Promise<ApiResponse<{ user: User; companies: Company[] }>> {
-    return this.request('/users/me');
+    return this.makeRequest('/users/me');
   }
 
   // Company Methods
@@ -412,6 +412,68 @@ class ApiService {
     });
   }
 
+  // Meetings
+  async getMeetings(): Promise<ApiResponse<{ meetings: any[] }>> {
+    // Get current company ID from localStorage
+    const companyId = localStorage.getItem('selectedCompanyId') || 'comp-001';
+    return this.request(`/meetings?companyId=${companyId}`);
+  }
+
+  async createMeeting(payload: any): Promise<ApiResponse<{ meeting: any }>> {
+    // Get current company ID from localStorage
+    const companyId = localStorage.getItem('selectedCompanyId') || 'comp-001';
+    const payloadWithCompany = { ...payload, companyId };
+    return this.request('/meetings', { method: 'POST', body: JSON.stringify(payloadWithCompany) });
+  }
+
+  async updateMeeting(id: number, payload: any): Promise<ApiResponse<{ meeting: any }>> {
+    // Get current company ID from localStorage
+    const companyId = localStorage.getItem('selectedCompanyId') || 'comp-001';
+    const payloadWithCompany = { ...payload, companyId };
+    return this.request(`/meetings/${id}`, { method: 'PUT', body: JSON.stringify(payloadWithCompany) });
+  }
+
+  async deleteMeeting(id: number): Promise<ApiResponse> {
+    // Get current company ID from localStorage
+    const companyId = localStorage.getItem('selectedCompanyId') || 'comp-001';
+    return this.request(`/meetings/${id}?companyId=${companyId}`, { method: 'DELETE' });
+  }
+
+  // Invoices/Receipts
+  async getInvoiceReceipts(): Promise<ApiResponse<{ items: any[] }>> {
+    return this.request('/invoices');
+  }
+
+  async createInvoiceReceipt(payload: any): Promise<ApiResponse<{ item: any }>> {
+    return this.request('/invoices', { method: 'POST', body: JSON.stringify(payload) });
+  }
+
+  async updateInvoiceStatus(id: string, status: string): Promise<ApiResponse<{ item: any }>> {
+    return this.request(`/invoices/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) });
+  }
+
+  // Assets
+  async getAssets(): Promise<ApiResponse<{ assets: any[] }>> {
+    return this.request('/assets');
+  }
+  async createAsset(payload: any): Promise<ApiResponse<{ asset: any }>> {
+    return this.request('/assets', { method: 'POST', body: JSON.stringify(payload) });
+  }
+  async updateAsset(id: string, payload: any): Promise<ApiResponse<{ asset: any }>> {
+    return this.request(`/assets/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+  }
+  async deleteAsset(id: string): Promise<ApiResponse> {
+    return this.request(`/assets/${id}`, { method: 'DELETE' });
+  }
+
+  // Ownership
+  async getCapital(): Promise<ApiResponse<{ capital: any[] }>> { return this.request('/ownership/capital'); }
+  async saveCapital(payload: any): Promise<ApiResponse<{ capital: any }>> { return this.request('/ownership/capital', { method: 'POST', body: JSON.stringify(payload) }); }
+  async getShareholders(): Promise<ApiResponse<{ shareholders: any[] }>> { return this.request('/ownership/shareholders'); }
+  async addShareholder(payload: any): Promise<ApiResponse<{ shareholder: any }>> { return this.request('/ownership/shareholders', { method: 'POST', body: JSON.stringify(payload) }); }
+  async getBeneficialOwners(): Promise<ApiResponse<{ beneficialOwners: any[] }>> { return this.request('/ownership/beneficial-owners'); }
+  async addBeneficialOwner(payload: any): Promise<ApiResponse<{ beneficialOwner: any }>> { return this.request('/ownership/beneficial-owners', { method: 'POST', body: JSON.stringify(payload) }); }
+
   // Utility Methods
   isAuthenticated(): boolean {
     return !!this.accessToken;
@@ -420,10 +482,12 @@ class ApiService {
   getAccessToken(): string | null {
     return this.accessToken;
   }
+
+  // Expose request method for direct use
+  async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+    return this.makeRequest(endpoint, options);
+  }
 }
 
 // Create and export singleton instance
 export const apiService = new ApiService(API_BASE_URL);
-
-// Export types for use in components
-export type { ApiResponse, AuthTokens, User, Company, LoginRequest, RegisterRequest };

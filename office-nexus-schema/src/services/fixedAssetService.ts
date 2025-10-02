@@ -35,13 +35,16 @@ export interface AssetSummary {
   retiredAssets: number;
 }
 
+import { apiService } from './apiService';
+
 class FixedAssetService {
   private static STORAGE_KEY = 'fixed_assets';
   private static DEPRECIATION_KEY = 'asset_depreciation';
 
-  static getAllAssets(): FixedAsset[] {
-    const data = localStorage.getItem(this.STORAGE_KEY);
-    return data ? JSON.parse(data) : this.getDefaultAssets();
+  static async getAllAssets(): Promise<FixedAsset[]> {
+    const res = await apiService.getAssets();
+    if (res.success && res.data?.assets) return res.data.assets as FixedAsset[];
+    return [];
   }
 
   static getDefaultAssets(): FixedAsset[] {
@@ -49,49 +52,22 @@ class FixedAssetService {
     return [];
   }
 
-  static saveAssets(assets: FixedAsset[]): void {
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(assets));
+  static saveAssets(_assets: FixedAsset[]): void {}
+
+  static async addAsset(assetData: Omit<FixedAsset, 'id' | 'currentBookValue' | 'createdAt' | 'updatedAt'>): Promise<FixedAsset | null> {
+    const res = await apiService.createAsset(assetData);
+    if (res.success && res.data?.asset) return res.data.asset as FixedAsset;
+    return null;
   }
 
-  static addAsset(assetData: Omit<FixedAsset, 'id' | 'currentBookValue' | 'createdAt' | 'updatedAt'>): FixedAsset {
-    const assets = this.getAllAssets();
-    const newAsset: FixedAsset = {
-      ...assetData,
-      id: Math.max(0, ...assets.map(a => a.id)) + 1,
-      currentBookValue: assetData.acquisitionCost,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    assets.push(newAsset);
-    this.saveAssets(assets);
-    return newAsset;
+  static async updateAsset(id: number, updates: Partial<FixedAsset>): Promise<boolean> {
+    const res = await apiService.updateAsset(String(id), updates);
+    return !!res.success;
   }
 
-  static updateAsset(id: number, updates: Partial<FixedAsset>): boolean {
-    const assets = this.getAllAssets();
-    const index = assets.findIndex(a => a.id === id);
-    
-    if (index === -1) return false;
-
-    assets[index] = {
-      ...assets[index],
-      ...updates,
-      updatedAt: new Date().toISOString()
-    };
-
-    this.saveAssets(assets);
-    return true;
-  }
-
-  static deleteAsset(id: number): boolean {
-    const assets = this.getAllAssets();
-    const filteredAssets = assets.filter(a => a.id !== id);
-    
-    if (filteredAssets.length === assets.length) return false;
-
-    this.saveAssets(filteredAssets);
-    return true;
+  static async deleteAsset(id: number): Promise<boolean> {
+    const res = await apiService.deleteAsset(String(id));
+    return !!res.success;
   }
 
   static calculateDepreciation(asset: FixedAsset, asOfDate: Date = new Date()): {
@@ -133,8 +109,8 @@ class FixedAssetService {
     };
   }
 
-  static updateAllDepreciation(): void {
-    const assets = this.getAllAssets();
+  static async updateAllDepreciation(): Promise<void> {
+    const assets = await this.getAllAssets();
     const updatedAssets = assets.map(asset => {
       if (asset.status === 'active') {
         const depreciation = this.calculateDepreciation(asset);
@@ -150,8 +126,8 @@ class FixedAssetService {
     this.saveAssets(updatedAssets);
   }
 
-  static getAssetSummary(): AssetSummary {
-    const assets = this.getAllAssets();
+  static async getAssetSummary(): Promise<AssetSummary> {
+    const assets = await this.getAllAssets();
     
     return {
       totalAssets: assets.length,
@@ -166,8 +142,8 @@ class FixedAssetService {
     };
   }
 
-  static retireAsset(id: number, disposalDate: string, disposalAmount?: number): boolean {
-    const assets = this.getAllAssets();
+  static async retireAsset(id: number, disposalDate: string, disposalAmount?: number): Promise<boolean> {
+    const assets = await this.getAllAssets();
     const asset = assets.find(a => a.id === id);
     
     if (!asset) return false;
@@ -180,7 +156,7 @@ class FixedAssetService {
       gainLoss = disposalAmount - depreciation.currentBookValue;
     }
 
-    this.updateAsset(id, {
+    await this.updateAsset(id, {
       status: disposalAmount !== undefined ? 'disposed' : 'retired',
       currentBookValue: disposalAmount !== undefined ? disposalAmount : depreciation.currentBookValue
     });
@@ -188,8 +164,8 @@ class FixedAssetService {
     return true;
   }
 
-  static getAssetsByCategory(): { [category: string]: FixedAsset[] } {
-    const assets = this.getAllAssets();
+  static async getAssetsByCategory(): Promise<{ [category: string]: FixedAsset[] }> {
+    const assets = await this.getAllAssets();
     return assets.reduce((acc, asset) => {
       if (!acc[asset.category]) {
         acc[asset.category] = [];
@@ -199,8 +175,8 @@ class FixedAssetService {
     }, {} as { [category: string]: FixedAsset[] });
   }
 
-  static exportToCSV(): string {
-    const assets = this.getAllAssets();
+  static async exportToCSV(): Promise<string> {
+    const assets = await this.getAllAssets();
     const headers = [
       'Asset Name',
       'Category',

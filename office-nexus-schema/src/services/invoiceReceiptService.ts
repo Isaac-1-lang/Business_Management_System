@@ -19,12 +19,10 @@ export interface InvoiceReceipt {
   tax_category?: string;
 }
 
-class InvoiceReceiptService {
-  private static invoiceReceipts: InvoiceReceipt[] = [];
-  private static invoiceCounter = 1;
-  private static receiptCounter = 1;
+import { apiService } from './apiService';
 
-  static createInvoiceReceipt(data: {
+class InvoiceReceiptService {
+  static async createInvoiceReceipt(data: {
     transaction_id: string;
     type: 'invoice' | 'receipt';
     party_name: string;
@@ -40,54 +38,48 @@ class InvoiceReceiptService {
     phone_number?: string;
     momo_reference?: string;
     tax_category?: string;
-  }): InvoiceReceipt {
-    const invoiceReceipt: InvoiceReceipt = {
-      id: `inv-${Date.now()}`,
+  }): Promise<InvoiceReceipt | null> {
+    const res = await apiService.createInvoiceReceipt({
       transaction_id: data.transaction_id,
       type: data.type,
-      number: data.invoice_number || this.generateInvoiceNumber(data.type),
       party_name: data.party_name,
       tin: data.tin,
       description: data.description,
       amount: data.amount,
       vat: data.vat,
       total: data.total,
-      attachment_url: data.attachment_url,
       date: data.date,
-      status: 'draft',
-      created_at: new Date().toISOString(),
+      attachment_url: data.attachment_url,
       payment_method: data.payment_method,
       phone_number: data.phone_number,
       momo_reference: data.momo_reference,
       tax_category: data.tax_category
-    };
-
-    this.invoiceReceipts.push(invoiceReceipt);
-    console.log(`Created ${data.type} record: ${invoiceReceipt.number}`);
-    
-    return invoiceReceipt;
+    });
+    if (res.success && res.data?.item) return res.data.item as InvoiceReceipt;
+    console.error('Failed to create invoice/receipt:', res.error || res.message);
+    return null;
   }
 
-  static getAllInvoiceReceipts(): InvoiceReceipt[] {
-    return [...this.invoiceReceipts].sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
+  static async getAllInvoiceReceipts(): Promise<InvoiceReceipt[]> {
+    const res = await apiService.getInvoiceReceipts();
+    if (res.success && res.data?.items) return (res.data.items as InvoiceReceipt[]).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    console.warn('Failed to fetch invoice/receipt records:', res.error || res.message);
+    return [];
   }
 
-  static getInvoiceReceiptsByType(type: 'invoice' | 'receipt'): InvoiceReceipt[] {
-    return this.invoiceReceipts.filter(item => item.type === type);
+  static async getInvoiceReceiptsByType(type: 'invoice' | 'receipt'): Promise<InvoiceReceipt[]> {
+    const items = await this.getAllInvoiceReceipts();
+    return items.filter(item => item.type === type);
   }
 
-  static getInvoiceReceiptByTransactionId(transactionId: string): InvoiceReceipt | undefined {
-    return this.invoiceReceipts.find(item => item.transaction_id === transactionId);
+  static async getInvoiceReceiptByTransactionId(transactionId: string): Promise<InvoiceReceipt | undefined> {
+    const items = await this.getAllInvoiceReceipts();
+    return items.find(item => item.transaction_id === transactionId);
   }
 
-  static updateStatus(id: string, status: InvoiceReceipt['status']): void {
-    const invoice = this.invoiceReceipts.find(item => item.id === id);
-    if (invoice) {
-      invoice.status = status;
-      console.log(`Updated ${invoice.type} ${invoice.number} status to: ${status}`);
-    }
+  static async updateStatus(id: string, status: InvoiceReceipt['status']): Promise<boolean> {
+    const res = await apiService.updateInvoiceStatus(id, status);
+    return !!res.success;
   }
 
   static getSummary() {
@@ -104,21 +96,12 @@ class InvoiceReceiptService {
     };
   }
 
-  private static generateInvoiceNumber(type: 'invoice' | 'receipt'): string {
-    if (type === 'invoice') {
-      const number = `INV-${new Date().getFullYear()}-${String(this.invoiceCounter).padStart(3, '0')}`;
-      this.invoiceCounter++;
-      return number;
-    } else {
-      const number = `REC-${new Date().getFullYear()}-${String(this.receiptCounter).padStart(3, '0')}`;
-      this.receiptCounter++;
-      return number;
-    }
-  }
+  private static generateInvoiceNumber(_type: 'invoice' | 'receipt'): string { return ''; }
 
-  static exportToCSV(): string {
+  static async exportToCSV(): Promise<string> {
     const headers = ['Number', 'Type', 'Date', 'Party', 'TIN', 'Amount', 'VAT', 'Total', 'Status', 'Tax Category'];
-    const rows = this.invoiceReceipts.map(item => [
+    const items = await this.getAllInvoiceReceipts();
+    const rows = items.map(item => [
       item.number,
       item.type,
       item.date,

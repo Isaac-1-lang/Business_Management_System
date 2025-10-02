@@ -1,6 +1,6 @@
-# 🏢 Office Nexus - Rwanda Business Management System
+# 🏢 Office Nexus · Rwanda Business Management System
 
-A comprehensive business management platform designed specifically for Rwandan businesses, handling tax compliance, accounting, HR management, and regulatory requirements.
+Office Nexus is a full‑stack business management platform tailored for Rwandan SMEs. It centralizes accounting, HR, tax compliance, reporting, and governance — with multi‑company support, strong security, and real‑time updates.
 
 ## 🚀 Quick Start
 
@@ -26,8 +26,10 @@ A comprehensive business management platform designed specifically for Rwandan b
    cp office-nexus-schema/env.example office-nexus-schema/.env
    
    # Edit with your configuration
-   nano Backend/.env
-   nano office-nexus-schema/.env
+   # Backend/.env
+   #   - DATABASE_URL, JWT_SECRET, PORT, FRONTEND_URL
+   # Frontend/.env
+   #   - VITE_API_URL (include /api/v1), VITE_WS_URL
    ```
 
 3. **Deploy everything:**
@@ -36,8 +38,8 @@ A comprehensive business management platform designed specifically for Rwandan b
    ```
 
 4. **Access the application:**
-   - Frontend: http://localhost
-   - Backend API: http://localhost:5000
+   - Frontend: http://localhost (or Vite dev at http://localhost:5173)
+   - Backend API: http://localhost:5000/api/v1
 
 ## 📋 Features
 
@@ -46,11 +48,11 @@ A comprehensive business management platform designed specifically for Rwandan b
 - **Company registration** - Complete business setup
 - **Document management** - Store and organize business documents
 
-### 💰 Financial Management
-- **Accounting system** - Double-entry bookkeeping
-- **Tax calculations** - Rwanda-specific tax compliance
-- **Financial reporting** - Comprehensive financial statements
-- **Cash flow management** - Track income and expenses
+### 💰 Financial & Tax Management
+- **Double‑entry accounting** with general ledger and trial balance
+- **Rwanda‑specific taxes** (VAT, PAYE/RSSB, corporate tax)
+- **Financial statements** and KPI dashboards
+- **Universal Transaction System (UTS)** for consistent posting
 
 ### 👥 HR Management
 - **Employee management** - Complete employee lifecycle
@@ -59,10 +61,9 @@ A comprehensive business management platform designed specifically for Rwandan b
 - **Performance tracking** - Employee evaluations
 
 ### 📊 Compliance & Reporting
-- **Tax compliance** - VAT, corporate tax, RSSB
-- **Regulatory reporting** - Government requirements
-- **Audit trails** - Complete transaction history
-- **Compliance alerts** - Deadline notifications
+- **Tax & regulatory** workflows and alerts
+- **Audit logs** and activity trails
+- **Reports** for finance, HR, and compliance
 
 ### 🔔 Notifications & Communication
 - **Real-time notifications** - Instant updates
@@ -97,13 +98,11 @@ A comprehensive business management platform designed specifically for Rwandan b
 - **React Query** - Server state management
 
 ### Backend
-- **Node.js** - JavaScript runtime
-- **Express.js** - Web framework
-- **Sequelize** - ORM for database
-- **PostgreSQL** - Primary database
-- **Redis** - Caching and sessions
-- **JWT** - Authentication
-- **Socket.io** - Real-time communication
+- **Node.js + Express**
+- **Sequelize** (PostgreSQL)
+- **Redis** (caching, sessions)
+- **JWT Auth**
+- **Socket.io** (real‑time)
 
 ### DevOps
 - **Docker** - Containerization
@@ -146,18 +145,17 @@ office-nexus/
 ./deploy.sh all
 ```
 
-### 2. Manual Deployment
+### 2. Manual (dev-friendly)
 ```bash
 # Backend
 cd Backend
 npm install
-npm start
+npm run dev
 
 # Frontend
 cd office-nexus-schema
 npm install
-npm run build
-npm run preview
+npm run dev
 ```
 
 ### 3. Cloud Platforms
@@ -195,57 +193,66 @@ JWT_SECRET=your-secret-key
 JWT_REFRESH_SECRET=your-refresh-secret
 NODE_ENV=development
 PORT=5000
-FRONTEND_URL=http://localhost:8080
+FRONTEND_URL=http://localhost:5173
 ```
 
 #### Frontend (.env)
 ```bash
-VITE_API_URL=http://localhost:5000
+VITE_API_URL=http://localhost:5000/api/v1
 VITE_WS_URL=ws://localhost:5000
 VITE_APP_NAME=Office Nexus
 ```
 
-## 📊 API Documentation
+## 📊 API Overview (prefix: `/api/v1`)
 
 ### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `POST /api/auth/logout` - User logout
-- `POST /api/auth/refresh` - Token refresh
+- `POST /auth/register` – User registration
+- `POST /auth/login` – User login
+- `POST /auth/logout` – Logout
+- `POST /auth/refresh` – Refresh token
 
 ### Companies
-- `GET /api/companies` - List companies
-- `POST /api/companies` - Create company
-- `GET /api/companies/:id` - Get company details
-- `PUT /api/companies/:id` - Update company
+- `GET /companies` – List companies
+- `POST /companies` – Create company
+- `GET /companies/:id` – Company details
+- `PUT /companies/:id` – Update company
 
 ### Employees
-- `GET /api/employees` - List employees
-- `POST /api/employees` - Create employee
-- `GET /api/employees/:id` - Get employee details
-- `PUT /api/employees/:id` - Update employee
+- `GET /employees` – List employees
+- `POST /employees` – Create employee
+- `GET /employees/:id` – Employee details
+- `PUT /employees/:id` – Update employee
 
 ### Accounting
-- `GET /api/accounting/transactions` - List transactions
-- `POST /api/accounting/transactions` - Create transaction
-- `GET /api/accounting/reports` - Financial reports
+- `GET /accounting/transactions` – List transactions (filters: type, dates, pagination)
+- `GET /accounting/transactions/:id` – Transaction details
+- `POST /accounting/transactions` – Create transaction
+- `GET /accounting/ledger` – General ledger
+- `GET /accounting/trial-balance` – Trial balance
+- `GET /accounting/stats` – Statistics
+
+### Dividends
+- `GET /dividends` – List dividend declarations
+- `POST /dividends` – Create declaration
+- `POST /dividends/:id/confirm` – Confirm declaration
+- `POST /dividends/:id/distributions/calculate` – Calculate distributions
+- `GET /dividends/:id/distributions` – List distributions
+- `POST /dividends/distributions/:distributionId/pay` – Mark distribution paid
 
 ### Compliance
-- `GET /api/compliance/alerts` - Compliance alerts
-- `GET /api/compliance/status` - Compliance status
-- `POST /api/compliance/alerts/:id/complete` - Mark alert complete
+- `GET /compliance/alerts` – Compliance alerts
+- `GET /compliance/status` – Compliance status
+- `POST /compliance/alerts/:id/complete` – Mark alert complete
 
-## 🔒 Security Features
+## 🔒 Security
 
-- **JWT Authentication** - Secure token-based auth
-- **Password Hashing** - bcrypt encryption
-- **Rate Limiting** - API protection
-- **CORS Protection** - Cross-origin security
-- **Input Validation** - Data sanitization
-- **SQL Injection Protection** - ORM usage
-- **XSS Protection** - Content security policies
+- **JWT auth** with refresh tokens
+- **Rate limiting** and CORS hardening
+- **Input validation** on all critical routes
+- **Sequelize** parameterization (SQLi protection)
+- **Helmet** CSP for XSS mitigation
 
-## 📈 Performance Features
+## 📈 Performance
 
 - **Database Indexing** - Optimized queries
 - **Redis Caching** - Fast data access
@@ -287,22 +294,28 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🎯 Roadmap
 
 ### Phase 1 (Current)
-- ✅ User authentication
-- ✅ Company management
-- ✅ Basic accounting
-- ✅ Employee management
+- ✅ Auth & multi‑company
+- ✅ Company & employee management
+- ✅ Accounting transactions, ledger, TB
+- ✅ Backend‑backed dividends
 
 ### Phase 2 (Next)
-- 🔄 Advanced reporting
-- 🔄 Tax automation
-- 🔄 Document management
+- 🔄 Replace remaining local storage with DB APIs (assets, meetings, invoices, ownership)
+- 🔄 Advanced reporting & dashboards
+- 🔄 Document AI for OCR/extraction
 - 🔄 Mobile app
 
 ### Phase 3 (Future)
-- 📋 AI-powered insights
-- 📋 Multi-language support
-- 📋 Advanced analytics
-- 📋 Third-party integrations
+- 📋 AI assistant (RAG over company docs + actions)
+- 📋 Predictive analytics & anomaly detection
+- 📋 Multi‑language support
+- 📋 Third‑party integrations
+
+---
+
+Notes
+- Business data is persisted in the backend database; the app no longer relies on browser localStorage for core records.
+- The frontend expects `VITE_API_URL` to point to the versioned API base (e.g., `http://localhost:5000/api/v1`).
 
 ---
 

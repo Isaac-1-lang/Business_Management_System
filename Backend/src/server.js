@@ -48,6 +48,10 @@ import complianceRoutes from './routes/compliance.js';
 import notificationRoutes from './routes/notification.js';
 import dividendRoutes from './routes/dividends.js';
 import reportRoutes from './routes/reports.js';
+import meetingRoutes from './routes/meetings.js';
+import invoiceRoutes from './routes/invoices.js';
+import assetRoutes from './routes/assets.js';
+import ownershipRoutes from './routes/ownership.js';
 
 // Import model associations
 import './models/associations.js';
@@ -198,6 +202,10 @@ app.use(`${API_PREFIX}/compliance`, authMiddleware, complianceRoutes);
 app.use(`${API_PREFIX}/notifications`, authMiddleware, notificationRoutes);
 app.use(`${API_PREFIX}/dividends`, authMiddleware, dividendRoutes);
 app.use(`${API_PREFIX}/reports`, authMiddleware, reportRoutes);
+app.use(`${API_PREFIX}/meetings`, authMiddleware, meetingRoutes);
+app.use(`${API_PREFIX}/invoices`, authMiddleware, invoiceRoutes);
+app.use(`${API_PREFIX}/assets`, authMiddleware, assetRoutes);
+app.use(`${API_PREFIX}/ownership`, authMiddleware, ownershipRoutes);
 
 // ==================== SOCKET.IO SETUP ====================
 

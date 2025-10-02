@@ -7,6 +7,7 @@
 
 import { User } from './User.js';
 import { Company } from './Company.js';
+import Meeting from './Meeting.js';
 import sequelize from '../database/connection.js';
 
 // User-Company Many-to-Many relationship with UserCompany model
@@ -78,4 +79,17 @@ User.hasMany(User, {
   sourceKey: 'id'
 });
 
-export { User, Company };
+// Company-Meeting One-to-Many relationship
+Company.hasMany(Meeting, {
+  as: 'meetings',
+  foreignKey: 'company_id',
+  sourceKey: 'id'
+});
+
+Meeting.belongsTo(Company, {
+  as: 'company',
+  foreignKey: 'company_id',
+  targetKey: 'id'
+});
+
+export { User, Company, Meeting };

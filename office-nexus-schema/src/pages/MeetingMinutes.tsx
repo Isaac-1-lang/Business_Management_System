@@ -44,11 +44,11 @@ export default function MeetingMinutes() {
     applyFilters();
   }, [meetings, filterType, filterStatus, searchQuery]);
 
-  const loadMeetings = () => {
-    const meetingData = MeetingMinutesService.getMeetings();
-    const stats = MeetingMinutesService.getStatistics();
-    setMeetings(meetingData);
-    setStatistics(stats);
+  const loadMeetings = async () => {
+    const meetingData = await MeetingMinutesService.getMeetings();
+    const stats = await MeetingMinutesService.getStatistics();
+    setMeetings(meetingData || []);
+    setStatistics(stats || {});
   };
 
   const applyFilters = () => {
@@ -91,9 +91,9 @@ export default function MeetingMinutes() {
     setViewingMeeting(meeting);
   };
 
-  const handleDeleteMeeting = (id: number) => {
+  const handleDeleteMeeting = async (id: number) => {
     if (confirm("Are you sure you want to delete this meeting?")) {
-      const success = MeetingMinutesService.deleteMeeting(id);
+      const success = await MeetingMinutesService.deleteMeeting(id);
       if (success) {
         toast({
           title: "Success",
@@ -104,16 +104,16 @@ export default function MeetingMinutes() {
     }
   };
 
-  const handleFormSubmit = (meetingData: any) => {
+  const handleFormSubmit = async (meetingData: any) => {
     try {
       if (editingMeeting) {
-        MeetingMinutesService.updateMeeting(editingMeeting.id, meetingData);
+        await MeetingMinutesService.updateMeeting(editingMeeting.id, meetingData);
         toast({
           title: "Success",
           description: "Meeting updated successfully",
         });
       } else {
-        MeetingMinutesService.addMeeting(meetingData);
+        await MeetingMinutesService.addMeeting(meetingData);
         toast({
           title: "Success",
           description: "Meeting created successfully",
