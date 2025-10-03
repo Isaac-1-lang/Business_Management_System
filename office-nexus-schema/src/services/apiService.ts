@@ -259,10 +259,18 @@ class ApiService {
       body: JSON.stringify(credentials),
     });
     
-    // If login successful, save tokens automatically
+    // If login successful, save tokens and set company automatically
     if (response.success && response.data && response.data.tokens) {
       this.saveTokens(response.data.tokens);
-      console.log('✅ Login successful, tokens saved');
+      
+      // Auto-select the first company if available
+      if (response.data.companies && response.data.companies.length > 0) {
+        const firstCompany = response.data.companies[0];
+        localStorage.setItem('selectedCompanyId', firstCompany.id);
+        console.log('✅ Login successful, auto-selected company:', firstCompany.name);
+      } else {
+        console.log('✅ Login successful, but no companies found');
+      }
     }
     
     return response;
@@ -743,6 +751,70 @@ class ApiService {
 
   getAccessToken(): string | null {
     return this.accessToken;
+  }
+
+  // User Management Methods
+  async getUsers(params?: {
+    page?: number;
+    limit?: number;
+    role?: string;
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+    
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.role) queryParams.append('role', params.role);
+    if (params?.isActive !== undefined) queryParams.append('isActive', params.isActive.toString());
+
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/users?${queryString}` : '/users';
+    
+    return this.makeRequest(endpoint);
+  }
+
+  async getUserById(id: string): Promise<ApiResponse<any>> {
+    return this.makeRequest(`/users/${id}`);
+  }
+
+  async createUser(userData: any): Promise<ApiResponse<any>> {
+    return this.makeRequest('/users', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+  }
+
+  async updateUser(id: string, userData: any): Promise<ApiResponse<any>> {
+    return this.makeRequest(`/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(userData),
+    });
+  }
+
+  async deleteUser(id: string): Promise<ApiResponse<any>> {
+    return this.makeRequest(`/users/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async activateUser(id: string): Promise<ApiResponse<any>> {
+    return this.makeRequest(`/users/${id}/activate`, {
+      method: 'POST',
+    });
+  }
+
+  async deactivateUser(id: string): Promise<ApiResponse<any>> {
+    return this.makeRequest(`/users/${id}/deactivate`, {
+      method: 'POST',
+    });
+  }
+
+  async getUserRoles(): Promise<ApiResponse<any>> {
+    return this.makeRequest('/users/roles');
+  }
+
+  async getUserStats(): Promise<ApiResponse<any>> {
+    return this.makeRequest('/users/stats');
   }
 
   // Expose request method for direct use
