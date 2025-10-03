@@ -8,7 +8,7 @@
  * - Type-safe API calls
  */
 
-const API_BASE_URL ='http://localhost:5000/api/v1';
+const API_BASE_URL = (import.meta as any)?.env?.VITE_API_URL || (typeof window !== 'undefined' ? `${window.location.origin}/api/v1` : 'http://localhost:5000/api/v1');
 
 // API Response Types
 export interface ApiResponse<T = any> {
