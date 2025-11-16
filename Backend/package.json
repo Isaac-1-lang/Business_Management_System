@@ -5,9 +5,9 @@
   "main": "src/server.js",
   "type": "module",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "build": "echo 'Backend build step not required for plain JS'",
+    "start": "node init && node src/server.js",
+    "dev": "node init && nodemon src/server.js",
+    "build": "node init && echo 'Backend build step not required for plain JS'",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint src/",
     "migrate": "node src/database/migrate.js",
