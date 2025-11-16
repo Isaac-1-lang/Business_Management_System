@@ -306,6 +306,19 @@ app.use(`${API_PREFIX}/payroll`, authMiddleware, payrollRoutes);
 app.use(`${API_PREFIX}/directors`, authMiddleware, directorsRoutes);
 app.use(`${API_PREFIX}/documents`, authMiddleware, documentsRoutes);
 
+// ==================== CATCH-ALL FOR INCORRECT API PATHS ====================
+// Handle requests to /auth/* without /api/v1 prefix - provide helpful error
+app.use('/auth', (req, res) => {
+  return res.status(404).json({
+    success: false,
+    message: `Route ${req.path} not found. Please use ${API_PREFIX}${req.path} instead.`,
+    error: 'ROUTE_NOT_FOUND',
+    suggestion: `The correct endpoint is: ${API_PREFIX}${req.path}`,
+    currentPath: req.path,
+    correctPath: `${API_PREFIX}${req.path}`
+  });
+});
+
 // ==================== SOCKET.IO SETUP ====================
 
 // Setup Socket.io with authentication and business logic
