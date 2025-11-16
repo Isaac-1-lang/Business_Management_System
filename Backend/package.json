@@ -5,8 +5,8 @@
   "main": "src/server.js",
   "type": "module",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
+    "start": "node api.js && node src/server.js",
+    "dev": "node api.js && nodemon src/server.js",
     "build": "echo 'Backend build step not required for plain JS'",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint src/",

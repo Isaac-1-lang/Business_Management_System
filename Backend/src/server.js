@@ -99,7 +99,8 @@ const socketOrigins = [
   "http://localhost:3000",
   "http://localhost:5174",
   "https://business-management-system-5c4g.vercel.app",
-  "https://business-management-system-em23.vercel.app"
+  "https://business-management-system-em23.vercel.app",
+  "https://int-black.vercel.app"
 ];
 
 const io = new Server(server, {
@@ -151,7 +152,8 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5174",
   "https://business-management-system-em23.vercel.app",
-  "https://business-management-system-5c4g.vercel.app", // Explicitly add the Vercel domain
+  "https://business-management-system-5c4g.vercel.app",
+  "https://int-black.vercel.app", // Explicitly add the frontend domain
   /^https:\/\/.*\.vercel\.app$/, // Regex pattern for all Vercel apps
   /^https:\/\/.*\.onrender\.com$/, // Regex pattern for Render apps
   /^https:\/\/.*\.render\.com$/, // Regex pattern for Render apps
