@@ -8,7 +8,7 @@
  * - Type-safe API calls
  */
 
-const API_BASE_URL = (import.meta as any)?.env?.VITE_API_URL || (typeof window !== 'undefined' ? `${window.location.origin}/api/v1` : 'http://localhost:5000/api/v1');
+const API_BASE_URL = (import.meta as any)?.env?.VITE_API_URL || 'http://localhost:5000/api/v1';
 
 // API Response Types
 export interface ApiResponse<T = any> {
@@ -89,6 +89,8 @@ class ApiService {
     this.baseURL = baseURL;
     // Load tokens from localStorage on initialization
     this.loadTokensFromStorage();
+    // Log the API base URL for debugging
+    console.log('🔗 API Service initialized with base URL:', this.baseURL);
   }
 
   // Get current user's company ID dynamically
@@ -175,7 +177,11 @@ class ApiService {
     try {
       const response = await fetch(url, config);
       
-      // Handle 401 errors in development mode
+      // Check content type to determine if response is JSON
+      const contentType = response.headers.get('content-type') || '';
+      const isJson = contentType.includes('application/json');
+      
+      // Handle 401 errors in development mode (before parsing response)
       if (response.status === 401) {
         const testCompanyId = localStorage.getItem('selectedCompanyId');
         if (testCompanyId && (testCompanyId.includes('test') || testCompanyId.includes('dev'))) {
@@ -194,12 +200,67 @@ class ApiService {
             // Retry the original request
             config.headers = this.getHeaders();
             const retryResponse = await fetch(url, config);
-            return await retryResponse.json();
+            const retryContentType = retryResponse.headers.get('content-type') || '';
+            if (retryContentType.includes('application/json')) {
+              try {
+                return await retryResponse.json();
+              } catch (e) {
+                const retryText = await retryResponse.text().catch(() => 'Unable to read response');
+                return {
+                  success: false,
+                  message: `Retry failed: ${retryText.substring(0, 200)}`,
+                  error: 'INVALID_RESPONSE',
+                };
+              }
+            } else {
+              const retryText = await retryResponse.text().catch(() => 'Unable to read response');
+              return {
+                success: false,
+                message: `Retry failed: ${retryText.substring(0, 200)}`,
+                error: 'INVALID_RESPONSE',
+              };
+            }
           }
         }
       }
 
-      const data: ApiResponse<T> = await response.json();
+      // Handle non-JSON responses (like HTML error pages)
+      if (!isJson) {
+        const text = await response.text();
+        console.error(`API returned non-JSON response (${response.status}):`, text.substring(0, 200));
+        
+        // If it's a 404, provide a helpful error message
+        if (response.status === 404) {
+          return {
+            success: false,
+            message: `API endpoint not found: ${url}. Make sure the backend server is running on port 5000 (http://localhost:5000/api/v1).`,
+            error: 'ENDPOINT_NOT_FOUND',
+          };
+        }
+        
+        return {
+          success: false,
+          message: `Server returned ${response.status} with non-JSON response`,
+          error: 'INVALID_RESPONSE',
+        };
+      }
+
+      // Parse JSON response
+      let data: ApiResponse<T>;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        // If JSON parsing fails, try to read as text for better error message
+        // Note: This won't work if we already tried to read the response, but we haven't
+        const text = await response.text().catch(() => 'Unable to read response');
+        console.error('Failed to parse JSON response:', text.substring(0, 200));
+        return {
+          success: false,
+          message: `Invalid JSON response from server: ${text.substring(0, 100)}`,
+          error: 'INVALID_JSON',
+        };
+      }
+      
       return data;
     } catch (error) {
       console.error('API Request Error:', error);
