@@ -82,15 +82,15 @@ class InvoiceReceiptService {
     return !!res.success;
   }
 
-  static getSummary() {
-    const invoices = this.getInvoiceReceiptsByType('invoice');
-    const receipts = this.getInvoiceReceiptsByType('receipt');
+  static async getSummary() {
+    const invoices = await this.getInvoiceReceiptsByType('invoice');
+    const receipts = await this.getInvoiceReceiptsByType('receipt');
     
     return {
       totalInvoices: invoices.length,
       totalReceipts: receipts.length,
-      totalSales: invoices.reduce((sum, inv) => sum + inv.total, 0),
-      totalPurchases: receipts.reduce((sum, rec) => sum + rec.total, 0),
+      totalSales: invoices.reduce((sum, inv) => sum + (inv.total || 0), 0),
+      totalPurchases: receipts.reduce((sum, rec) => sum + (rec.total || 0), 0),
       outstandingInvoices: invoices.filter(inv => inv.status !== 'paid').length,
       pendingReceipts: receipts.filter(rec => rec.status === 'draft').length
     };

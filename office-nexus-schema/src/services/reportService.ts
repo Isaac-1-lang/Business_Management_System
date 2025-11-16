@@ -15,7 +15,7 @@ export interface ReportData {
 
 class ReportService {
   static async generateFinancialSummary(): Promise<ReportData> {
-    const summary = AccountingService.getFinancialSummary();
+    const summary = await AccountingService.getFinancialSummary();
     const currentDate = new Date().toISOString().split('T')[0];
     
     return {

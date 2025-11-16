@@ -553,10 +553,10 @@ class DataIntegrationService {
   }
 
   // Generate comprehensive reports
-  static generateFinancialReport(startDate: string, endDate: string) {
+  static async generateFinancialReport(startDate: string, endDate: string) {
     const integratedData = this.getIntegratedData();
-    const trialBalance = AccountingService.getTrialBalance(endDate);
-    const financialSummary = AccountingService.getFinancialSummary();
+    const trialBalance = await AccountingService.getTrialBalance(endDate);
+    const financialSummary = await AccountingService.getFinancialSummary();
     const ownershipReport = this.generateOwnershipReport();
     
     return {

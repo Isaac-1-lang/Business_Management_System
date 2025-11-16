@@ -11,13 +11,50 @@ import { UniversalTransactionForm } from "@/components/forms/UniversalTransactio
 import InvoiceReceiptService from "@/services/invoiceReceiptService";
 
 export default function InvoicesReceipts() {
-  const [invoiceReceipts, setInvoiceReceipts] = useState(InvoiceReceiptService.getAllInvoiceReceipts());
+  const [invoiceReceipts, setInvoiceReceipts] = useState<any[]>([]);
   const [filterType, setFilterType] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [isTransactionFormOpen, setIsTransactionFormOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState<any>({
+    totalInvoices: 0,
+    totalReceipts: 0,
+    totalSales: 0,
+    totalPurchases: 0,
+    outstandingInvoices: 0,
+    pendingReceipts: 0
+  });
 
-  const refreshData = () => {
-    setInvoiceReceipts(InvoiceReceiptService.getAllInvoiceReceipts());
+  const refreshData = async () => {
+    try {
+      setLoading(true);
+      const [receipts, summaryData] = await Promise.all([
+        InvoiceReceiptService.getAllInvoiceReceipts(),
+        InvoiceReceiptService.getSummary()
+      ]);
+      setInvoiceReceipts(Array.isArray(receipts) ? receipts : []);
+      setSummary(summaryData || {
+        totalInvoices: 0,
+        totalReceipts: 0,
+        totalSales: 0,
+        totalPurchases: 0,
+        outstandingInvoices: 0,
+        pendingReceipts: 0
+      });
+    } catch (error) {
+      console.error('Error loading invoice receipts:', error);
+      setInvoiceReceipts([]);
+      setSummary({
+        totalInvoices: 0,
+        totalReceipts: 0,
+        totalSales: 0,
+        totalPurchases: 0,
+        outstandingInvoices: 0,
+        pendingReceipts: 0
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -25,16 +62,16 @@ export default function InvoicesReceipts() {
   }, []);
 
   const filteredInvoices = invoiceReceipts.filter(item => {
+    if (!item) return false;
+    
     const matchesType = filterType === "all" || item.type === filterType;
     const matchesSearch = searchTerm === "" || 
-      item.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.party_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchTerm.toLowerCase());
+      (item.number || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.party_name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.description || "").toLowerCase().includes(searchTerm.toLowerCase());
     
     return matchesType && matchesSearch;
   });
-
-  const summary = InvoiceReceiptService.getSummary();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-RW', {
@@ -53,14 +90,19 @@ export default function InvoicesReceipts() {
     }
   };
 
-  const handleExportCSV = () => {
-    const csv = InvoiceReceiptService.exportToCSV();
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `invoices-receipts-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
+  const handleExportCSV = async () => {
+    try {
+      const csv = await InvoiceReceiptService.exportToCSV();
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoices-receipts-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+    }
   };
 
   return (

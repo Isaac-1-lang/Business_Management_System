@@ -12,17 +12,18 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { CompanyProfileForm } from "@/components/forms/CompanyProfileForm";
-import CompanyService, { type Company } from "@/services/companyService";
+import { useAuth } from "@/contexts/AuthContext";
+import { apiService, Company as ApiCompany } from "@/services/apiService";
 
 // Extended company data for profile management
-interface CompanyProfileData extends Company {
+type CompanyProfileData = ApiCompany & {
   sector?: string;
-  size?: string;
   incorporation_date?: string;
 }
 
 export default function CompanyProfile() {
   const { toast } = useToast();
+  const { selectedCompany, companies } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -31,19 +32,78 @@ export default function CompanyProfile() {
 
   useEffect(() => {
     loadCompanyData();
-  }, []);
+  }, [selectedCompany]);
 
   const loadCompanyData = async () => {
     try {
       setLoading(true);
-      const currentCompany = CompanyService.getCurrentCompany();
-      if (currentCompany) {
-        setCompanyData(currentCompany);
+      
+      // First try to get from AuthContext
+      if (selectedCompany) {
+        // Fetch full company details from API
+        const companyId = String(selectedCompany.id);
+        const response = await apiService.getCompany(companyId);
+        
+        if (response.success && response.data) {
+          // Map API company to CompanyProfileData format
+          const apiCompany = response.data;
+          setCompanyData({
+            ...apiCompany,
+            sector: apiCompany.industry || '',
+            size: apiCompany.size || '',
+            incorporation_date: apiCompany.createdAt || '',
+          });
+        } else {
+          // Fallback to selectedCompany from context
+          setCompanyData({
+            id: String(selectedCompany.id),
+            name: selectedCompany.name || '',
+            tin: selectedCompany.tin || '',
+            vatNumber: '',
+            rdbRegistration: '',
+            address: {
+              street: '',
+              city: '',
+              district: '',
+              sector: '',
+              cell: '',
+            },
+            phone: '',
+            email: '',
+            industry: '',
+            size: '',
+            isActive: true,
+            createdAt: '',
+            updatedAt: '',
+          } as CompanyProfileData);
+        }
+      } else if (companies && companies.length > 0) {
+        // If no selected company, use first company
+        const firstCompany = companies[0];
+        const companyId = String(firstCompany.id);
+        const response = await apiService.getCompany(companyId);
+        
+        if (response.success && response.data) {
+          const apiCompany = response.data;
+          setCompanyData({
+            ...apiCompany,
+            sector: apiCompany.industry || '',
+            size: apiCompany.size || '',
+            incorporation_date: apiCompany.createdAt || '',
+          });
+        }
+      } else {
+        toast({
+          title: "No Company",
+          description: "Please create or select a company first",
+          variant: "destructive"
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error loading company data:', error);
       toast({
         title: "Error",
-        description: "Failed to load company data",
+        description: error.message || "Failed to load company data",
         variant: "destructive"
       });
     } finally {
@@ -55,18 +115,34 @@ export default function CompanyProfile() {
     if (!companyData) return;
     
     try {
-      CompanyService.updateCompany(companyData.id, companyData);
-      setIsEditing(false);
-      toast({
-        title: "Success",
-        description: "Company profile updated successfully"
-      });
-    } catch (error) {
+      setLoading(true);
+      const response = await apiService.updateCompany(companyData.id, companyData);
+      
+      if (response.success && response.data) {
+        setCompanyData({
+          ...response.data,
+          sector: response.data.industry || '',
+          incorporation_date: response.data.createdAt || '',
+        });
+        setIsEditing(false);
+        toast({
+          title: "Success",
+          description: "Company profile updated successfully"
+        });
+        // Reload company data to get latest from server
+        await loadCompanyData();
+      } else {
+        throw new Error(response.message || 'Failed to update company');
+      }
+    } catch (error: any) {
+      console.error('Error updating company:', error);
       toast({
         title: "Error",
-        description: "Failed to update company profile",
+        description: error.message || "Failed to update company profile",
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -152,7 +228,7 @@ export default function CompanyProfile() {
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="gap-1">
               <CheckCircle className="w-3 h-3" />
-              {companyData.status === 'active' ? 'Active' : companyData.status}
+              {companyData.isActive ? 'Active' : 'Inactive'}
             </Badge>
             {!isEditing ? (
               <Button onClick={() => setIsEditing(true)} className="gap-2">
@@ -227,20 +303,20 @@ export default function CompanyProfile() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="registration">Registration Number</Label>
+                      <Label htmlFor="registration">RDB Registration Number</Label>
                       <Input
                         id="registration"
-                        value={companyData.registration_number || ""}
-                        onChange={(e) => handleInputChange('registration_number', e.target.value)}
+                        value={companyData.rdbRegistration || ""}
+                        onChange={(e) => handleInputChange('rdbRegistration', e.target.value)}
                         disabled={!isEditing}
                         className="mt-1"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="currency">Currency</Label>
+                      <Label htmlFor="size">Company Size</Label>
                       <Select 
-                        value={companyData.currency} 
-                        onValueChange={(value) => handleInputChange('currency', value)}
+                        value={companyData.size || ""} 
+                        onValueChange={(value) => handleInputChange('size', value)}
                         disabled={!isEditing}
                       >
                         <SelectTrigger>
@@ -310,14 +386,14 @@ export default function CompanyProfile() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="fiscal">Fiscal Year Start</Label>
+                      <Label htmlFor="industry">Industry</Label>
                       <Input
-                        id="fiscal"
-                        value={companyData.fiscal_year_start}
-                        onChange={(e) => handleInputChange('fiscal_year_start', e.target.value)}
+                        id="industry"
+                        value={companyData.industry || ""}
+                        onChange={(e) => handleInputChange('industry', e.target.value)}
                         disabled={!isEditing}
                         className="mt-1"
-                        placeholder="MM-DD (e.g., 01-01)"
+                        placeholder="Industry sector"
                       />
                     </div>
                   </div>
@@ -366,31 +442,41 @@ export default function CompanyProfile() {
                       <MapPin className="w-4 h-4" />
                       Address
                     </Label>
-                    <Input
-                      id="address"
-                      value={companyData.address || ""}
-                      onChange={(e) => handleInputChange('address', e.target.value)}
-                      disabled={!isEditing}
-                      className="mt-1"
-                    />
+                    <div className="space-y-2">
+                      <Input
+                        id="street"
+                        placeholder="Street"
+                        value={companyData.address?.street || ""}
+                        onChange={(e) => handleInputChange('address', { ...companyData.address, street: e.target.value } as any)}
+                        disabled={!isEditing}
+                        className="mt-1"
+                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input
+                          placeholder="City"
+                          value={companyData.address?.city || ""}
+                          onChange={(e) => handleInputChange('address', { ...companyData.address, city: e.target.value } as any)}
+                          disabled={!isEditing}
+                        />
+                        <Input
+                          placeholder="District"
+                          value={companyData.address?.district || ""}
+                          onChange={(e) => handleInputChange('address', { ...companyData.address, district: e.target.value } as any)}
+                          disabled={!isEditing}
+                        />
+                      </div>
+                    </div>
                   </div>
                   
                   <Separator />
                   
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium">Tax Regime</Label>
-                    <Badge variant="outline" className="w-full justify-center">
-                      {companyData.tax_regime}
-                    </Badge>
-                  </div>
-                  
-                  <div className="space-y-2">
                     <Label className="text-sm font-medium">Company Status</Label>
                     <Badge 
-                      variant={companyData.status === 'active' ? 'default' : 'secondary'}
+                      variant={companyData.isActive ? 'default' : 'secondary'}
                       className="w-full justify-center"
                     >
-                      {companyData.status.charAt(0).toUpperCase() + companyData.status.slice(1)}
+                      {companyData.isActive ? 'Active' : 'Inactive'}
                     </Badge>
                   </div>
                 </CardContent>
@@ -410,7 +496,7 @@ export default function CompanyProfile() {
                     <Label htmlFor="created">Created Date</Label>
                     <Input
                       id="created"
-                      value={new Date(companyData.created_at).toLocaleDateString()}
+                      value={companyData.createdAt ? new Date(companyData.createdAt).toLocaleDateString() : 'N/A'}
                       disabled
                       className="mt-1"
                     />
@@ -419,7 +505,7 @@ export default function CompanyProfile() {
                     <Label htmlFor="updated">Last Updated</Label>
                     <Input
                       id="updated"
-                      value={new Date(companyData.updated_at).toLocaleDateString()}
+                      value={companyData.updatedAt ? new Date(companyData.updatedAt).toLocaleDateString() : 'N/A'}
                       disabled
                       className="mt-1"
                     />

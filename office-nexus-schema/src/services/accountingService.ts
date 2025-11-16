@@ -85,36 +85,49 @@ class AccountingService {
     });
   }
   
-  static getTrialBalance(asOfDate?: string) {
-    return TransactionEngine.getTrialBalance(asOfDate);
+  static async getTrialBalance(asOfDate?: string, companyId?: string) {
+    return await TransactionEngine.getTrialBalance(asOfDate, companyId);
   }
   
-  static getGeneralLedger() {
-    return TransactionEngine.getGeneralLedger();
+  static async getGeneralLedger(params?: { startDate?: string; endDate?: string; companyId?: string }) {
+    return await TransactionEngine.getGeneralLedger(params);
   }
   
-  static getAccountBalance(accountCode: string, asOfDate?: string) {
-    return TransactionEngine.getAccountBalance(accountCode, asOfDate);
+  static async getAccountBalance(accountCode: string, asOfDate?: string, companyId?: string) {
+    return await TransactionEngine.getAccountBalance(accountCode, asOfDate, companyId);
   }
-  
-  static getFinancialSummary() {
-    const trialBalance = this.getTrialBalance();
+
+  static async getFinancialSummary(companyId?: string) {
+    const trialBalance = await this.getTrialBalance(undefined, companyId);
+    
+    // Ensure trialBalance is an array
+    if (!Array.isArray(trialBalance)) {
+      console.warn('⚠️ Trial balance is not an array:', trialBalance);
+      return {
+        revenue: 0,
+        expenses: 0,
+        profit: 0,
+        assets: 0,
+        liabilities: 0,
+        equity: 0
+      };
+    }
     
     const revenue = trialBalance
-      .filter(acc => acc.account_code.startsWith('4'))
-      .reduce((sum, acc) => sum + acc.credit, 0);
+      .filter(acc => acc.account_code && acc.account_code.startsWith('4'))
+      .reduce((sum, acc) => sum + (acc.credit || 0), 0);
     
     const expenses = trialBalance
-      .filter(acc => acc.account_code.startsWith('5'))
-      .reduce((sum, acc) => sum + acc.debit, 0);
+      .filter(acc => acc.account_code && acc.account_code.startsWith('5'))
+      .reduce((sum, acc) => sum + (acc.debit || 0), 0);
     
     const assets = trialBalance
-      .filter(acc => acc.account_code.startsWith('1'))
-      .reduce((sum, acc) => sum + acc.balance, 0);
+      .filter(acc => acc.account_code && acc.account_code.startsWith('1'))
+      .reduce((sum, acc) => sum + (acc.balance || 0), 0);
     
     const liabilities = trialBalance
-      .filter(acc => acc.account_code.startsWith('2'))
-      .reduce((sum, acc) => sum + Math.abs(acc.balance), 0);
+      .filter(acc => acc.account_code && acc.account_code.startsWith('2'))
+      .reduce((sum, acc) => sum + Math.abs(acc.balance || 0), 0);
     
     return {
       revenue,
@@ -126,18 +139,31 @@ class AccountingService {
     };
   }
   
-  static getVATReport(fromDate: string, toDate: string) {
-    const glEntries = TransactionEngine.getGeneralLedger().filter(
+  static async getVATReport(fromDate: string, toDate: string, companyId?: string) {
+    const glEntries = await this.getGeneralLedger({ startDate: fromDate, endDate: toDate, companyId });
+    
+    // Ensure glEntries is an array
+    if (!Array.isArray(glEntries)) {
+      console.warn('⚠️ General ledger is not an array:', glEntries);
+      return {
+        vatPayable: 0,
+        vatInput: 0,
+        vatDue: 0,
+        period: `${fromDate} to ${toDate}`
+      };
+    }
+    
+    const filteredEntries = glEntries.filter(
       entry => entry.date >= fromDate && entry.date <= toDate
     );
     
-    const vatPayable = glEntries
+    const vatPayable = filteredEntries
       .filter(entry => entry.account_code === '2101' && entry.source_type === 'invoice')
-      .reduce((sum, entry) => sum + entry.credit, 0);
+      .reduce((sum, entry) => sum + (entry.credit || 0), 0);
     
-    const vatInput = glEntries
+    const vatInput = filteredEntries
       .filter(entry => entry.account_code === '1002' && entry.source_type === 'purchase')
-      .reduce((sum, entry) => sum + entry.debit, 0);
+      .reduce((sum, entry) => sum + (entry.debit || 0), 0);
     
     return {
       vatPayable,

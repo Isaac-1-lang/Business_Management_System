@@ -671,12 +671,31 @@ class ApiService {
     return this.request(endpoint);
   }
 
-  async getTrialBalance(params?: { asOfDate?: string }): Promise<ApiResponse<any>> {
+  async getTrialBalance(params?: { asOfDate?: string; companyId?: string }): Promise<ApiResponse<any>> {
     // Backend supports startDate/endDate; we map asOfDate to endDate for convenience
     const query = new URLSearchParams();
     if (params?.asOfDate) query.set('endDate', params.asOfDate);
+    
+    // Ensure companyId is included
+    let companyId = params?.companyId;
+    if (!companyId) {
+      companyId = await this.getCurrentCompanyId();
+    }
+    
+    if (!companyId) {
+      console.error('❌ No company ID available for trial balance request');
+      return {
+        success: false,
+        message: 'Company ID is required. Please select a company first.',
+        error: 'COMPANY_ID_REQUIRED',
+      };
+    }
+    
+    query.set('companyId', companyId);
+    console.log('🔗 Fetching trial balance for company:', companyId);
+    
     const qs = query.toString();
-    const endpoint = qs ? `/accounting/trial-balance?${qs}` : '/accounting/trial-balance';
+    const endpoint = `/accounting/trial-balance?${qs}`;
     return this.request(endpoint);
   }
 
@@ -770,11 +789,46 @@ class ApiService {
   }
 
   // Invoices/Receipts
-  async getInvoiceReceipts(): Promise<ApiResponse<{ items: any[] }>> {
-    return this.request('/invoices');
+  async getInvoiceReceipts(companyId?: string): Promise<ApiResponse<{ items: any[] }>> {
+    const query = new URLSearchParams();
+    
+    // Ensure companyId is included
+    let finalCompanyId = companyId;
+    if (!finalCompanyId) {
+      finalCompanyId = await this.getCurrentCompanyId();
+    }
+    
+    if (!finalCompanyId) {
+      console.error('❌ No company ID available for invoices request');
+      return {
+        success: false,
+        message: 'Company ID is required. Please select a company first.',
+        error: 'COMPANY_ID_REQUIRED',
+      };
+    }
+    
+    query.set('companyId', finalCompanyId);
+    console.log('🔗 Fetching invoices for company:', finalCompanyId);
+    
+    const qs = query.toString();
+    const endpoint = `/invoices?${qs}`;
+    return this.request(endpoint);
   }
 
   async createInvoiceReceipt(payload: any): Promise<ApiResponse<{ item: any }>> {
+    // Ensure companyId is included in payload
+    if (!payload.companyId) {
+      const companyId = await this.getCurrentCompanyId();
+      if (companyId) {
+        payload.companyId = companyId;
+      } else {
+        return {
+          success: false,
+          message: 'Company ID is required. Please select a company first.',
+          error: 'COMPANY_ID_REQUIRED',
+        };
+      }
+    }
     return this.request('/invoices', { method: 'POST', body: JSON.stringify(payload) });
   }
 
@@ -783,8 +837,30 @@ class ApiService {
   }
 
   // Assets
-  async getAssets(): Promise<ApiResponse<{ assets: any[] }>> {
-    return this.request('/assets');
+  async getAssets(companyId?: string): Promise<ApiResponse<{ assets: any[] }>> {
+    const query = new URLSearchParams();
+    
+    // Ensure companyId is included
+    let finalCompanyId = companyId;
+    if (!finalCompanyId) {
+      finalCompanyId = await this.getCurrentCompanyId();
+    }
+    
+    if (!finalCompanyId) {
+      console.error('❌ No company ID available for assets request');
+      return {
+        success: false,
+        message: 'Company ID is required. Please select a company first.',
+        error: 'COMPANY_ID_REQUIRED',
+      };
+    }
+    
+    query.set('companyId', finalCompanyId);
+    console.log('🔗 Fetching assets for company:', finalCompanyId);
+    
+    const qs = query.toString();
+    const endpoint = `/assets?${qs}`;
+    return this.request(endpoint);
   }
   async createAsset(payload: any): Promise<ApiResponse<{ asset: any }>> {
     return this.request('/assets', { method: 'POST', body: JSON.stringify(payload) });

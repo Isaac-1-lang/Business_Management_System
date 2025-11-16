@@ -25,25 +25,47 @@ export default function FixedAssets() {
 
   useEffect(() => {
     loadAssets();
-    FixedAssetService.updateAllDepreciation();
+    updateDepreciation();
   }, []);
 
-  const loadAssets = () => {
-    const allAssets = FixedAssetService.getAllAssets();
-    setAssets(allAssets);
+  const loadAssets = async () => {
+    try {
+      const allAssets = await FixedAssetService.getAllAssets();
+      setAssets(Array.isArray(allAssets) ? allAssets : []);
+    } catch (error) {
+      console.error('Error loading assets:', error);
+      setAssets([]);
+    }
   };
 
-  const handleAssetSuccess = () => {
-    loadAssets();
+  const updateDepreciation = async () => {
+    try {
+      await FixedAssetService.updateAllDepreciation();
+    } catch (error) {
+      console.error('Error updating depreciation:', error);
+    }
   };
 
-  const handleUpdateDepreciation = () => {
-    FixedAssetService.updateAllDepreciation();
-    loadAssets();
-    toast({
-      title: "Depreciation Updated",
-      description: "All asset depreciation values have been updated"
-    });
+  const handleAssetSuccess = async () => {
+    await loadAssets();
+  };
+
+  const handleUpdateDepreciation = async () => {
+    try {
+      await FixedAssetService.updateAllDepreciation();
+      await loadAssets();
+      toast({
+        title: "Depreciation Updated",
+        description: "All asset depreciation values have been updated"
+      });
+    } catch (error) {
+      console.error('Error updating depreciation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update depreciation",
+        variant: "destructive"
+      });
+    }
   };
 
   const handlePostMonthlyDepreciation = () => {
@@ -56,33 +78,51 @@ export default function FixedAssets() {
     });
   };
 
-  const handleRetireAsset = (asset: FixedAsset) => {
-    const success = FixedAssetService.retireAsset(asset.id, new Date().toISOString().split('T')[0]);
-    if (success) {
-      loadAssets();
+  const handleRetireAsset = async (asset: FixedAsset) => {
+    try {
+      const success = await FixedAssetService.retireAsset(asset.id, new Date().toISOString().split('T')[0]);
+      if (success) {
+        await loadAssets();
+        toast({
+          title: "Asset Retired",
+          description: `${asset.name} has been marked as retired`
+        });
+      }
+    } catch (error) {
+      console.error('Error retiring asset:', error);
       toast({
-        title: "Asset Retired",
-        description: `${asset.name} has been marked as retired`
+        title: "Error",
+        description: "Failed to retire asset",
+        variant: "destructive"
       });
     }
   };
 
-  const handleExportAssets = () => {
-    const csvData = FixedAssetService.exportToCSV();
-    const blob = new Blob([csvData], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `fixed-assets-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+  const handleExportAssets = async () => {
+    try {
+      const csvData = await FixedAssetService.exportToCSV();
+      const blob = new Blob([csvData], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `fixed-assets-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
 
-    toast({
-      title: "Export Complete",
-      description: "Fixed assets data has been exported to CSV"
-    });
+      toast({
+        title: "Export Complete",
+        description: "Fixed assets data has been exported to CSV"
+      });
+    } catch (error) {
+      console.error('Error exporting assets:', error);
+      toast({
+        title: "Error",
+        description: "Failed to export assets",
+        variant: "destructive"
+      });
+    }
   };
 
   const showDepreciationSchedule = (asset: FixedAsset) => {
@@ -90,19 +130,70 @@ export default function FixedAssets() {
     setShowDepreciationDialog(true);
   };
 
+  const [summary, setSummary] = useState<any>({
+    totalAssets: 0,
+    totalOriginalCost: 0,
+    totalCurrentValue: 0,
+    totalDepreciation: 0,
+    activeAssets: 0,
+    retiredAssets: 0
+  });
+  const [categories, setCategories] = useState<string[]>([]);
+  const [depreciationSchedule, setDepreciationSchedule] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadSummary = async () => {
+      try {
+        const summaryData = await FixedAssetService.getAssetSummary();
+        setSummary(summaryData || {
+          totalAssets: 0,
+          totalOriginalCost: 0,
+          totalCurrentValue: 0,
+          totalDepreciation: 0,
+          activeAssets: 0,
+          retiredAssets: 0
+        });
+      } catch (error) {
+        console.error('Error loading asset summary:', error);
+      }
+    };
+    loadSummary();
+  }, [assets]);
+
+  useEffect(() => {
+    const uniqueCategories = [...new Set(assets.map(asset => asset.category).filter(Boolean))];
+    setCategories(uniqueCategories);
+  }, [assets]);
+
+  useEffect(() => {
+    const loadDepreciationSchedule = async () => {
+      if (selectedAsset) {
+        try {
+          const schedule = await FixedAssetService.getDepreciationSchedule(selectedAsset.id);
+          setDepreciationSchedule(Array.isArray(schedule) ? schedule : []);
+        } catch (error) {
+          console.error('Error loading depreciation schedule:', error);
+          setDepreciationSchedule([]);
+        }
+      } else {
+        setDepreciationSchedule([]);
+      }
+    };
+    loadDepreciationSchedule();
+  }, [selectedAsset]);
+
   const filteredAssets = assets.filter(asset => {
-    const matchesCategory = filterCategory === "all" || asset.category.toLowerCase().includes(filterCategory.toLowerCase());
+    if (!asset) return false;
+    
+    const matchesCategory = filterCategory === "all" || (asset.category || "").toLowerCase().includes(filterCategory.toLowerCase());
     const matchesStatus = filterStatus === "all" || asset.status === filterStatus;
     const matchesSearch = searchTerm === "" || 
-      asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      asset.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      asset.supplier?.toLowerCase().includes(searchTerm.toLowerCase());
+      (asset.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (asset.location || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (asset.supplier || "").toLowerCase().includes(searchTerm.toLowerCase());
     
     return matchesCategory && matchesStatus && matchesSearch;
   });
-
-  const summary = FixedAssetService.getAssetSummary();
-  const categories = [...new Set(assets.map(asset => asset.category))];
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -117,9 +208,6 @@ export default function FixedAssets() {
     }
   };
 
-  const getDepreciationSchedule = (asset: FixedAsset) => {
-    return FixedAssetService.getDepreciationSchedule(asset.id);
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -336,7 +424,7 @@ export default function FixedAssets() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {getDepreciationSchedule(selectedAsset).map((row) => (
+                    {depreciationSchedule.map((row) => (
                       <TableRow key={row.year}>
                         <TableCell>{row.year}</TableCell>
                         <TableCell className="text-right">

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, FileText, Download, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,13 +12,43 @@ import AccountingService from "@/services/accountingService";
 export default function TrialBalance() {
   const { toast } = useToast();
   const [asOfDate, setAsOfDate] = useState(new Date().toISOString().split('T')[0]);
+  const [trialBalance, setTrialBalance] = useState<any[]>([]);
+  const [financialSummary, setFinancialSummary] = useState<any>({
+    revenue: 0,
+    expenses: 0,
+    profit: 0,
+    assets: 0,
+    liabilities: 0,
+    equity: 0
+  });
   
-  // Get trial balance from accounting system
-  const trialBalance = AccountingService.getTrialBalance(asOfDate);
-  const financialSummary = AccountingService.getFinancialSummary();
+  useEffect(() => {
+    loadData();
+  }, [asOfDate]);
   
-  const totalDebits = trialBalance.reduce((sum, acc) => sum + acc.debit, 0);
-  const totalCredits = trialBalance.reduce((sum, acc) => sum + acc.credit, 0);
+  const loadData = async () => {
+    try {
+      const [balance, summary] = await Promise.all([
+        AccountingService.getTrialBalance(asOfDate),
+        AccountingService.getFinancialSummary()
+      ]);
+      setTrialBalance(Array.isArray(balance) ? balance : []);
+      setFinancialSummary(summary || {
+        revenue: 0,
+        expenses: 0,
+        profit: 0,
+        assets: 0,
+        liabilities: 0,
+        equity: 0
+      });
+    } catch (error) {
+      console.error('Error loading trial balance:', error);
+      setTrialBalance([]);
+    }
+  };
+  
+  const totalDebits = trialBalance.reduce((sum, acc) => sum + (acc.debit || 0), 0);
+  const totalCredits = trialBalance.reduce((sum, acc) => sum + (acc.credit || 0), 0);
   const isBalanced = Math.abs(totalDebits - totalCredits) < 0.01;
 
   const handleExport = (format: string) => {
@@ -36,7 +66,8 @@ export default function TrialBalance() {
     }).format(amount);
   };
 
-  const getAccountTypeColor = (accountCode: string) => {
+  const getAccountTypeColor = (accountCode: string | undefined) => {
+    if (!accountCode || typeof accountCode !== 'string') return 'text-gray-700';
     if (accountCode.startsWith('1')) return 'text-blue-700'; // Assets
     if (accountCode.startsWith('2')) return 'text-red-700';  // Liabilities
     if (accountCode.startsWith('3')) return 'text-purple-700'; // Equity
@@ -149,13 +180,13 @@ export default function TrialBalance() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {trialBalance.map((account) => (
-                  account.debit > 0 || account.credit > 0 ? (
-                    <TableRow key={account.account_code}>
+                {trialBalance.map((account, index) => (
+                  account && (account.debit > 0 || account.credit > 0) ? (
+                    <TableRow key={account.account_code || `account-${index}`}>
                       <TableCell className={`font-mono font-medium ${getAccountTypeColor(account.account_code)}`}>
-                        {account.account_code}
+                        {account.account_code || 'N/A'}
                       </TableCell>
-                      <TableCell className="font-medium">{account.account_name}</TableCell>
+                      <TableCell className="font-medium">{account.account_name || account.account || 'Unnamed Account'}</TableCell>
                       <TableCell className="text-right">
                         {account.debit > 0 ? formatCurrency(account.debit) : "-"}
                       </TableCell>

@@ -26,16 +26,47 @@ export default function AccountingBooks() {
   const [dateTo, setDateTo] = useState("");
 
   // Get real data from transaction engine
-  const [generalLedger, setGeneralLedger] = useState(TransactionEngine.getGeneralLedger());
-  const [financialSummary, setFinancialSummary] = useState(AccountingService.getFinancialSummary());
+  const [generalLedger, setGeneralLedger] = useState<any[]>([]);
+  const [financialSummary, setFinancialSummary] = useState<any>({
+    revenue: 0,
+    expenses: 0,
+    profit: 0,
+    assets: 0,
+    liabilities: 0,
+    equity: 0
+  });
 
   useEffect(() => {
     refreshData();
   }, []);
 
-  const refreshData = () => {
-    setGeneralLedger(TransactionEngine.getGeneralLedger());
-    setFinancialSummary(AccountingService.getFinancialSummary());
+  const refreshData = async () => {
+    try {
+      const [ledger, summary] = await Promise.all([
+        TransactionEngine.getGeneralLedger(),
+        AccountingService.getFinancialSummary()
+      ]);
+      setGeneralLedger(Array.isArray(ledger) ? ledger : []);
+      setFinancialSummary(summary || {
+        revenue: 0,
+        expenses: 0,
+        profit: 0,
+        assets: 0,
+        liabilities: 0,
+        equity: 0
+      });
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+      setGeneralLedger([]);
+      setFinancialSummary({
+        revenue: 0,
+        expenses: 0,
+        profit: 0,
+        assets: 0,
+        liabilities: 0,
+        equity: 0
+      });
+    }
   };
 
   // Apply filters

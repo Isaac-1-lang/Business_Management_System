@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, FileText, Download, Filter, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,19 +17,56 @@ export default function GeneralLedger() {
   const [filterAccount, setFilterAccount] = useState("all");
   const [filterSourceType, setFilterSourceType] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [generalLedger, setGeneralLedger] = useState<any[]>([]);
+  const [trialBalance, setTrialBalance] = useState<any[]>([]);
+  const [financialSummary, setFinancialSummary] = useState<any>({
+    revenue: 0,
+    expenses: 0,
+    profit: 0,
+    assets: 0,
+    liabilities: 0,
+    equity: 0
+  });
   
-  // Get data from the transaction engine
-  const generalLedger = TransactionEngine.getGeneralLedger();
-  const trialBalance = TransactionEngine.getTrialBalance();
-  const financialSummary = AccountingService.getFinancialSummary();
+  useEffect(() => {
+    loadData();
+  }, []);
+  
+  const loadData = async () => {
+    try {
+      const [ledger, balance, summary] = await Promise.all([
+        TransactionEngine.getGeneralLedger(),
+        TransactionEngine.getTrialBalance(),
+        AccountingService.getFinancialSummary()
+      ]);
+      setGeneralLedger(Array.isArray(ledger) ? ledger : []);
+      setTrialBalance(Array.isArray(balance) ? balance : []);
+      setFinancialSummary(summary || {
+        revenue: 0,
+        expenses: 0,
+        profit: 0,
+        assets: 0,
+        liabilities: 0,
+        equity: 0
+      });
+    } catch (error) {
+      console.error('Error loading data:', error);
+      setGeneralLedger([]);
+      setTrialBalance([]);
+    }
+  };
   
   // Filter entries
   const filteredEntries = generalLedger.filter(entry => {
+    if (!entry) return false;
+    
     const matchesAccount = filterAccount === "all" || entry.account_code === filterAccount;
     const matchesSourceType = filterSourceType === "all" || entry.source_type === filterSourceType;
-    const matchesSearch = entry.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         entry.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         entry.account_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = searchTerm === "" || (
+      (entry.reference || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (entry.description || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (entry.account_name || "").toLowerCase().includes(searchTerm.toLowerCase())
+    );
     return matchesAccount && matchesSourceType && matchesSearch;
   });
   

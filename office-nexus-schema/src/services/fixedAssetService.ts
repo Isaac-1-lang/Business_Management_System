@@ -207,13 +207,14 @@ class FixedAssetService {
     return csvData;
   }
 
-  static getDepreciationSchedule(assetId: number): Array<{
+  static async getDepreciationSchedule(assetId: number): Promise<Array<{
     year: number;
     openingValue: number;
     depreciation: number;
     closingValue: number;
-  }> {
-    const asset = this.getAllAssets().find(a => a.id === assetId);
+  }>> {
+    const assets = await this.getAllAssets();
+    const asset = assets.find(a => a.id === assetId);
     if (!asset) return [];
 
     const schedule = [];

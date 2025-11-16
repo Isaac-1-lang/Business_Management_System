@@ -102,19 +102,28 @@ class TransactionEngine {
     return this.refreshGeneralLedger(params);
   }
   
-  static async getTrialBalance(asOfDate?: string): Promise<{ account_code: string; account_name: string; debit: number; credit: number; balance: number }[]> {
-    const res = await apiService.getTrialBalance({ asOfDate });
+  static async getTrialBalance(asOfDate?: string, companyId?: string): Promise<{ account_code: string; account_name: string; debit: number; credit: number; balance: number }[]> {
+    const res = await apiService.getTrialBalance({ asOfDate, companyId });
     if (res.success && res.data?.trialBalance) {
       return res.data.trialBalance;
     }
+    
+    if (res.error === 'COMPANY_ID_REQUIRED') {
+      console.warn('⚠️ Company ID required for trial balance. User may need to create or join a company first.');
+      return [];
+    }
+    
     console.warn('Failed to fetch trial balance:', res.error || res.message);
     return [];
   }
   
-  static async getAccountBalance(accountCode: string, asOfDate?: string): Promise<number> {
-    const trial = await this.getTrialBalance(asOfDate);
+  static async getAccountBalance(accountCode: string, asOfDate?: string, companyId?: string): Promise<number> {
+    const trial = await this.getTrialBalance(asOfDate, companyId);
+    if (!Array.isArray(trial)) {
+      return 0;
+    }
     const row = trial.find(r => r.account_code === accountCode);
-    return row ? row.balance : 0;
+    return row ? (row.balance || 0) : 0;
   }
   
   static async getAuditTrail(_sourceType?: GLEntry['source_type'], _sourceId?: string): Promise<GLEntry[]> {
