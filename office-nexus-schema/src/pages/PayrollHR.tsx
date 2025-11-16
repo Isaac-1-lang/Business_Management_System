@@ -27,8 +27,8 @@ export default function PayrollHR() {
     loadPayrollData();
   }, [selectedMonth]);
 
-  const loadEmployees = () => {
-    const allEmployees = PayrollService.getAllEmployees();
+  const loadEmployees = async () => {
+    const allEmployees = await PayrollService.getAllEmployees();
     setEmployees(allEmployees);
   };
 

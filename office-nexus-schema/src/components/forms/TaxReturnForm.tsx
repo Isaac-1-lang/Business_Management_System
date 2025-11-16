@@ -54,13 +54,13 @@ export function TaxReturnForm({ open, onClose, onSuccess }: TaxReturnFormProps) 
       
       switch (returnType) {
         case 'VAT':
-          result = TaxService.generateVATReturn(period);
+          result = await TaxService.generateVATReturn(period);
           break;
         case 'PAYE':
-          result = TaxService.generatePAYEReturn(period);
+          result = await TaxService.generatePAYEReturn(period);
           break;
         case 'CIT':
-          result = TaxService.generateCITReturn(period);
+          result = await TaxService.generateCITReturn(period);
           break;
         case 'QIT':
           result = TaxService.generateQITReturn(quarter, year);

@@ -8,13 +8,13 @@ import { apiService } from './apiService';
 
 export default class PayrollService {
   // Get all payroll periods for the current company
-  static async getPayrollPeriods(filters = {}) {
+  static async getPayrollPeriods(filters: { status?: string; year?: string; page?: number; limit?: number } = {}) {
     try {
       const queryParams = new URLSearchParams();
       if (filters.status) queryParams.append('status', filters.status);
       if (filters.year) queryParams.append('year', filters.year);
-      if (filters.page) queryParams.append('page', filters.page);
-      if (filters.limit) queryParams.append('limit', filters.limit);
+      if (filters.page) queryParams.append('page', String(filters.page));
+      if (filters.limit) queryParams.append('limit', String(filters.limit));
       
       const res = await apiService.request(`/payroll/periods?${queryParams.toString()}`);
       if (res.success && res.data) return res.data;
@@ -58,14 +58,14 @@ export default class PayrollService {
   }
 
   // Get payroll records
-  static async getPayrollRecords(filters = {}) {
+  static async getPayrollRecords(filters: { payroll_period_id?: string; employee_id?: string; payment_status?: string; page?: number; limit?: number } = {}) {
     try {
       const queryParams = new URLSearchParams();
       if (filters.payroll_period_id) queryParams.append('payroll_period_id', filters.payroll_period_id);
       if (filters.employee_id) queryParams.append('employee_id', filters.employee_id);
       if (filters.payment_status) queryParams.append('payment_status', filters.payment_status);
-      if (filters.page) queryParams.append('page', filters.page);
-      if (filters.limit) queryParams.append('limit', filters.limit);
+      if (filters.page) queryParams.append('page', String(filters.page));
+      if (filters.limit) queryParams.append('limit', String(filters.limit));
       
       const res = await apiService.request(`/payroll/records?${queryParams.toString()}`);
       if (res.success && res.data) return res.data;
@@ -169,5 +169,20 @@ export default class PayrollService {
       cancelled: 'Cancelled'
     };
     return labels[status] || status;
+  }
+
+  // Get all employees (delegates to apiService)
+  static async getAllEmployees(companyId?: string): Promise<any[]> {
+    try {
+      const res = await apiService.getEmployees(companyId);
+      if (res.success && res.data) {
+        return Array.isArray(res.data) ? res.data : (res.data as any)?.employees || [];
+      }
+      console.warn('Failed to fetch employees:', res.error || res.message);
+      return [];
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+      return [];
+    }
   }
 }

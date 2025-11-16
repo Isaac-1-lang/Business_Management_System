@@ -33,10 +33,12 @@ export default function TaxReturns() {
   const [isLoading, setIsLoading] = useState(true);
 
   // Get tax summary for dashboard metrics
-  const [taxSummary, setTaxSummary] = useState(TaxService.getTaxSummary());
+  const [taxSummary, setTaxSummary] = useState<any>(null);
 
   useEffect(() => {
     loadTaxReturns();
+    // Load tax summary
+    TaxService.getTaxSummary().then(setTaxSummary).catch(console.error);
   }, []);
 
   const loadTaxReturns = async () => {
@@ -127,14 +129,15 @@ export default function TaxReturns() {
     const currentMonth = new Date().toISOString().slice(0, 7);
     
     try {
-      const vatReturn = TaxService.generateVATReturn(currentMonth);
-      const payeReturn = TaxService.generatePAYEReturn(currentMonth);
+      const vatReturn = await TaxService.generateVATReturn(currentMonth);
+      const payeReturn = await TaxService.generatePAYEReturn(currentMonth);
       
       console.log('VAT Return:', vatReturn);
       console.log('PAYE Return:', payeReturn);
       
       // Refresh tax summary
-      setTaxSummary(TaxService.getTaxSummary());
+      const summary = await TaxService.getTaxSummary();
+      setTaxSummary(summary);
       
       toast({
         title: "Returns Generated",
@@ -483,7 +486,8 @@ export default function TaxReturns() {
             setSelectedReturn(null);
           }}
           onSuccess={async () => {
-            setTaxSummary(TaxService.getTaxSummary());
+            const summary = await TaxService.getTaxSummary();
+            setTaxSummary(summary);
             await loadTaxReturns();
           }}
         />

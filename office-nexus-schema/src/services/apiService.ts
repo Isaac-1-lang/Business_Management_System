@@ -18,6 +18,7 @@ export interface ApiResponse<T = any> {
   error?: string;
   code?: string;
   timestamp?: string;
+  retryAfter?: number;
 }
 
 export interface AuthTokens {
@@ -77,6 +78,10 @@ export interface RegisterRequest {
   phone?: string;
   role?: string;
   companyId?: string;
+  company?: {
+    name: string;
+    tin?: string;
+  };
 }
 
 // API Service Class
@@ -84,6 +89,8 @@ class ApiService {
   private baseURL: string;
   private accessToken: string | null = null;
   private refreshToken: string | null = null;
+  private requestCache: Map<string, { data: any; timestamp: number }> = new Map();
+  private readonly CACHE_TTL = 5000; // 5 seconds cache for GET requests
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
@@ -98,28 +105,46 @@ class ApiService {
     try {
       // First check if we have a selected company in localStorage
       const selectedCompanyId = localStorage.getItem('selectedCompanyId');
-      if (selectedCompanyId && !selectedCompanyId.includes('test-company')) {
+      if (selectedCompanyId && selectedCompanyId.trim() !== '' && !selectedCompanyId.includes('test-company') && !selectedCompanyId.includes('dev')) {
+        console.log('✅ Using company ID from localStorage:', selectedCompanyId);
         return selectedCompanyId;
       }
 
       // If no valid company ID, fetch user info to get companies
+      console.log('🔍 Fetching user companies to get company ID...');
       const response = await this.getCurrentUser();
-      if (response.success && response.data && response.data.companies) {
-        const companies = response.data.companies;
+      if (response.success && response.data) {
+        const companies = response.data.companies || [];
+        console.log('📋 User companies:', companies.length, 'found');
+        
         if (companies.length > 0) {
           const firstCompany = companies[0];
-          localStorage.setItem('selectedCompanyId', firstCompany.id);
-          console.log('✅ Auto-selected company:', firstCompany.name, '(ID:', firstCompany.id, ')');
-          return firstCompany.id;
+          const companyId = firstCompany.id ? String(firstCompany.id) : null;
+          if (companyId) {
+            localStorage.setItem('selectedCompanyId', companyId);
+            console.log('✅ Auto-selected company:', firstCompany.name || 'Unnamed', '(ID:', companyId, ')');
+            return companyId;
+          } else {
+            console.warn('⚠️ Company object found but no ID:', firstCompany);
+          }
+        } else {
+          console.warn('⚠️ User has no companies associated. Please create or join a company first.');
+          console.log('💡 Response data:', JSON.stringify(response.data, null, 2));
         }
+      } else {
+        console.warn('⚠️ Failed to get user info:', response.message || response.error);
       }
 
       // If still no company, return null
-      console.warn('⚠️ No companies found for user');
+      console.warn('⚠️ No company ID available');
       return null;
     } catch (error) {
-      console.error('Error getting current company ID:', error);
-      return localStorage.getItem('selectedCompanyId');
+      console.error('❌ Error getting current company ID:', error);
+      const fallbackId = localStorage.getItem('selectedCompanyId');
+      if (fallbackId && fallbackId.trim() !== '') {
+        return fallbackId;
+      }
+      return null;
     }
   }
 
@@ -166,6 +191,19 @@ class ApiService {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
+    
+    // Check cache for GET requests
+    const isGetRequest = !options.method || options.method === 'GET';
+    const cacheKey = `${options.method || 'GET'}:${url}`;
+    
+    if (isGetRequest) {
+      const cached = this.requestCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+        console.log('📦 Using cached response for:', endpoint);
+        return cached.data;
+      }
+    }
+    
     const config: RequestInit = {
       ...options,
       headers: {
@@ -224,6 +262,18 @@ class ApiService {
         }
       }
 
+      // Handle rate limiting (429)
+      if (response.status === 429) {
+        const retryAfter = response.headers.get('Retry-After') || '60';
+        console.warn(`⚠️ Rate limit exceeded. Please wait ${retryAfter} seconds before making more requests.`);
+        return {
+          success: false,
+          message: `Too many requests. Please wait ${retryAfter} seconds and try again.`,
+          error: 'RATE_LIMIT_EXCEEDED',
+          retryAfter: parseInt(retryAfter),
+        };
+      }
+
       // Handle non-JSON responses (like HTML error pages)
       if (!isJson) {
         const text = await response.text();
@@ -238,11 +288,102 @@ class ApiService {
           };
         }
         
+        // If it's a 409 Conflict (user already exists)
+        if (response.status === 409) {
+          return {
+            success: false,
+            message: 'An account with this email already exists. Please try logging in instead.',
+            error: 'USER_EXISTS',
+          };
+        }
+        
+        // If it's a 400 Bad Request
+        if (response.status === 400) {
+          return {
+            success: false,
+            message: 'Invalid request. Please check your input and try again.',
+            error: 'BAD_REQUEST',
+          };
+        }
+        
+        // If it's a 429, handle it
+        if (response.status === 429) {
+          return {
+            success: false,
+            message: 'Too many requests. Please wait a moment and try again.',
+            error: 'RATE_LIMIT_EXCEEDED',
+          };
+        }
+        
         return {
           success: false,
           message: `Server returned ${response.status} with non-JSON response`,
           error: 'INVALID_RESPONSE',
         };
+      }
+
+      // Handle specific status codes before parsing JSON
+      if (response.status === 409) {
+        // User already exists
+        try {
+          const data = await response.json();
+          return {
+            success: false,
+            message: data.message || 'An account with this email already exists. Please try logging in instead.',
+            error: 'USER_EXISTS',
+            data: data.data,
+          };
+        } catch {
+          return {
+            success: false,
+            message: 'An account with this email already exists. Please try logging in instead.',
+            error: 'USER_EXISTS',
+          };
+        }
+      }
+
+      if (response.status === 400) {
+        // Bad request - validation error
+        try {
+          const data = await response.json();
+          console.error('400 Bad Request response:', data);
+          
+          // Format validation errors for display
+          let errorMessage = data.message || 'Invalid request. Please check your input.';
+          if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+            const errorDetails = data.data.map((err: any) => {
+              const field = err.param || err.field || '';
+              const msg = err.msg || err.message || '';
+              return field ? `${field}: ${msg}` : msg;
+            }).join(', ');
+            if (errorDetails) {
+              errorMessage = `${errorMessage}: ${errorDetails}`;
+            }
+          } else if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+            const errorDetails = data.errors.map((err: any) => {
+              const field = err.param || err.field || '';
+              const msg = err.msg || err.message || '';
+              return field ? `${field}: ${msg}` : msg;
+            }).join(', ');
+            if (errorDetails) {
+              errorMessage = `${errorMessage}: ${errorDetails}`;
+            }
+          }
+          
+          return {
+            success: false,
+            message: errorMessage,
+            error: data.code || 'VALIDATION_ERROR',
+            data: data.data || data.errors,
+          };
+        } catch (e) {
+          console.error('Failed to parse 400 error response:', e);
+          return {
+            success: false,
+            message: 'Invalid request. Please check your input and try again.',
+            error: 'BAD_REQUEST',
+          };
+        }
       }
 
       // Parse JSON response
@@ -259,6 +400,14 @@ class ApiService {
           message: `Invalid JSON response from server: ${text.substring(0, 100)}`,
           error: 'INVALID_JSON',
         };
+      }
+      
+      // Cache successful GET responses
+      if (isGetRequest && data.success && response.status === 200) {
+        this.requestCache.set(cacheKey, {
+          data,
+          timestamp: Date.now(),
+        });
       }
       
       return data;
@@ -337,7 +486,7 @@ class ApiService {
     return response;
   }
 
-  async register(userData: RegisterRequest): Promise<ApiResponse<{ user: User; tokens: AuthTokens }>> {
+  async register(userData: RegisterRequest): Promise<ApiResponse<{ user: User; companies: Company[]; tokens: AuthTokens }>> {
     return this.makeRequest('/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData),
@@ -493,12 +642,32 @@ class ApiService {
   }
 
   // Accounting - Ledger & Reports
-  async getAccountingLedger(params?: { startDate?: string; endDate?: string }): Promise<ApiResponse<any>> {
+  async getAccountingLedger(params?: { startDate?: string; endDate?: string; companyId?: string }): Promise<ApiResponse<any>> {
     const query = new URLSearchParams();
     if (params?.startDate) query.set('startDate', params.startDate);
     if (params?.endDate) query.set('endDate', params.endDate);
+    
+    // Get companyId from params or try to get it automatically
+    let companyId = params?.companyId;
+    if (!companyId) {
+      companyId = await this.getCurrentCompanyId();
+    }
+    
+    // CompanyId is required for this endpoint
+    if (!companyId) {
+      console.error('❌ No company ID available for ledger request');
+      return {
+        success: false,
+        message: 'Company ID is required. Please select a company first.',
+        error: 'COMPANY_ID_REQUIRED',
+      };
+    }
+    
+    query.set('companyId', companyId);
+    console.log('🔗 Fetching ledger for company:', companyId);
+    
     const qs = query.toString();
-    const endpoint = qs ? `/accounting/ledger?${qs}` : '/accounting/ledger';
+    const endpoint = `/accounting/ledger?${qs}`;
     return this.request(endpoint);
   }
 

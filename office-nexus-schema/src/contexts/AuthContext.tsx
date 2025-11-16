@@ -170,13 +170,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const response = await apiService.login(credentials);
 
       if (response.success && response.data) {
+        const companies = response.data.companies || [];
         dispatch({
           type: 'AUTH_SUCCESS',
           payload: {
             user: response.data.user,
-            companies: response.data.companies,
+            companies: companies,
           },
         });
+        
+        // Auto-select first company if available and not already selected
+        if (companies.length > 0) {
+          const savedCompanyId = localStorage.getItem('selectedCompanyId');
+          const companyToSelect = savedCompanyId 
+            ? companies.find(c => String(c.id) === savedCompanyId) || companies[0]
+            : companies[0];
+          
+          if (companyToSelect) {
+            localStorage.setItem('selectedCompanyId', String(companyToSelect.id));
+            dispatch({ type: 'SET_SELECTED_COMPANY', payload: companyToSelect });
+          }
+        }
+        
         return true;
       } else {
         dispatch({ type: 'AUTH_FAILURE', payload: response.message || 'Login failed' });
@@ -195,20 +210,57 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const response = await apiService.register(userData);
 
       if (response.success && response.data) {
+        const companies = response.data.companies || [];
         dispatch({
           type: 'AUTH_SUCCESS',
           payload: {
             user: response.data.user,
-            companies: [],
+            companies: companies,
           },
         });
+        
+        // Auto-select first company if available
+        if (companies.length > 0) {
+          const firstCompany = companies[0];
+          localStorage.setItem('selectedCompanyId', String(firstCompany.id));
+          dispatch({ type: 'SET_SELECTED_COMPANY', payload: firstCompany });
+        }
+        
         return true;
       } else {
-        dispatch({ type: 'AUTH_FAILURE', payload: response.message || 'Registration failed' });
+        // Handle specific error codes
+        let errorMessage = response.message || 'Registration failed';
+        
+        console.error('Registration failed:', {
+          success: response.success,
+          message: response.message,
+          error: response.error,
+          data: response.data
+        });
+        
+        if (response.error === 'USER_EXISTS') {
+          errorMessage = 'An account with this email already exists. Please try logging in instead.';
+        } else if (response.error === 'VALIDATION_ERROR' && response.data) {
+          // Format validation errors nicely
+          const validationErrors = Array.isArray(response.data) 
+            ? response.data.map((err: any) => {
+                const field = err.param || err.field || 'field';
+                const msg = err.msg || err.message || 'Invalid value';
+                return `${field}: ${msg}`;
+              }).join(', ')
+            : 'Please check your input and try again';
+          errorMessage = `Validation error: ${validationErrors}`;
+          console.error('Validation errors:', response.data);
+        } else if (response.error === 'BAD_REQUEST') {
+          errorMessage = response.message || 'Invalid request. Please check your input and try again.';
+        }
+        
+        dispatch({ type: 'AUTH_FAILURE', payload: errorMessage });
         return false;
       }
-    } catch (error) {
-      dispatch({ type: 'AUTH_FAILURE', payload: 'Registration failed' });
+    } catch (error: any) {
+      const errorMessage = error.message || 'Registration failed. Please try again.';
+      dispatch({ type: 'AUTH_FAILURE', payload: errorMessage });
       return false;
     }
   };

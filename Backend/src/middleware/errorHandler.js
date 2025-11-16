@@ -251,11 +251,23 @@ export const successResponse = (res, data, message = 'Success', statusCode = 200
 /**
  * Error response helper
  */
-export const errorResponse = (res, message, statusCode = 400, errorCode = null) => {
-  return res.status(statusCode).json({
+export const errorResponse = (res, message, statusCode = 400, errorCode = null, data = null) => {
+  const response = {
     success: false,
     message,
     code: errorCode,
     timestamp: new Date().toISOString()
-  });
+  };
+  
+  // Include validation errors or other data if provided
+  if (data !== null) {
+    if (Array.isArray(data)) {
+      response.data = data;
+      response.errors = data; // For backward compatibility
+    } else {
+      response.data = data;
+    }
+  }
+  
+  return res.status(statusCode).json(response);
 };

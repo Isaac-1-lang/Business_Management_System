@@ -70,6 +70,47 @@ class TaxService {
   // Empty array - replace with actual API calls in production
   private static qitPayments: QITReturn[] = [];
 
+  // Helper methods to create empty tax returns when company is not available
+  private static getEmptyVATReturn(month: string): VATReturn {
+    return {
+      period: month,
+      sales_vat: 0,
+      purchase_vat: 0,
+      net_vat_payable: 0,
+      total_sales: 0,
+      total_purchases: 0,
+      transactions: {
+        sales: [],
+        purchases: []
+      }
+    };
+  }
+
+  private static getEmptyPAYEReturn(month: string): PAYEReturn {
+    return {
+      period: month,
+      total_gross_salary: 0,
+      total_paye: 0,
+      total_rssb: 0,
+      employees: []
+    };
+  }
+
+  private static getEmptyCITReturn(year: string): CITReturn {
+    return {
+      year,
+      turnover: 0,
+      total_expenses: 0,
+      profit: 0,
+      cit_payable: 0,
+      tax_rate: 0.30,
+      breakdown: {
+        revenue_accounts: [],
+        expense_accounts: []
+      }
+    };
+  }
+
   // VAT Return Generation
   static async generateVATReturn(month: string): Promise<VATReturn> {
     const startDate = `${month}-01`;
@@ -121,14 +162,15 @@ class TaxService {
   }
   
   // PAYE Return Generation
-  static generatePAYEReturn(month: string): PAYEReturn {
+  static async generatePAYEReturn(month: string): Promise<PAYEReturn> {
     const startDate = `${month}-01`;
     const endDate = new Date(month + '-01');
     endDate.setMonth(endDate.getMonth() + 1);
     endDate.setDate(0);
     const endDateStr = endDate.toISOString().split('T')[0];
     
-    const payrollEntries = TransactionEngine.getGeneralLedger().filter(
+    const ledger = await TransactionEngine.getGeneralLedger();
+    const payrollEntries = (Array.isArray(ledger) ? ledger : []).filter(
       entry => entry.date >= startDate && 
                entry.date <= endDateStr && 
                entry.source_type === 'payroll'
@@ -181,11 +223,12 @@ class TaxService {
   }
   
   // CIT Return Generation
-  static generateCITReturn(year: string): CITReturn {
+  static async generateCITReturn(year: string): Promise<CITReturn> {
     const startDate = `${year}-01-01`;
     const endDate = `${year}-12-31`;
     
-    const glEntries = TransactionEngine.getGeneralLedger().filter(
+    const ledger = await TransactionEngine.getGeneralLedger();
+    const glEntries = (Array.isArray(ledger) ? ledger : []).filter(
       entry => entry.date >= startDate && entry.date <= endDate
     );
     
@@ -299,9 +342,29 @@ class TaxService {
     const currentYear = currentDate.getFullYear().toString();
     const currentQuarter = this.getCurrentQuarter();
     
-    const vatReturn = await this.generateVATReturn(currentMonth);
-    const payeReturn = this.generatePAYEReturn(currentMonth);
-    const citReturn = this.generateCITReturn(currentYear);
+    // Try to get tax returns, but handle errors gracefully if no company is available
+    let vatReturn, payeReturn, citReturn;
+    try {
+      vatReturn = await this.generateVATReturn(currentMonth);
+    } catch (error) {
+      console.warn('Failed to generate VAT return:', error);
+      vatReturn = this.getEmptyVATReturn(currentMonth);
+    }
+    
+    try {
+      payeReturn = await this.generatePAYEReturn(currentMonth);
+    } catch (error) {
+      console.warn('Failed to generate PAYE return:', error);
+      payeReturn = this.getEmptyPAYEReturn(currentMonth);
+    }
+    
+    try {
+      citReturn = await this.generateCITReturn(currentYear);
+    } catch (error) {
+      console.warn('Failed to generate CIT return:', error);
+      citReturn = this.getEmptyCITReturn(currentYear);
+    }
+    
     const qitReturn = this.generateQITReturn(currentQuarter, currentYear);
     
     // Calculate next filing dates

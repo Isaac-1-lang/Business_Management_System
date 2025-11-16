@@ -39,6 +39,10 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
     password: '',
     confirmPassword: '',
     phone: '',
+    // Company creation fields
+    companyName: '',
+    companyTin: '',
+    createCompany: true, // Default to creating a company
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -70,8 +74,8 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
 
   // Validate password strength
   const validatePasswordStrength = (password: string): { isValid: boolean; message: string } => {
-    if (password.length < 6) {
-      return { isValid: false, message: 'Password must be at least 6 characters long' };
+    if (password.length < 8) {
+      return { isValid: false, message: 'Password must be at least 8 characters long' };
     }
     if (!/(?=.*[a-z])/.test(password)) {
       return { isValid: false, message: 'Password must contain at least one lowercase letter' };
@@ -118,6 +122,19 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
       errors.phone = 'Please enter a valid Rwanda phone number';
     }
 
+    // Company validation (if creating company)
+    if (formData.createCompany) {
+      if (!formData.companyName.trim()) {
+        errors.companyName = 'Company name is required';
+      } else if (formData.companyName.length < 2) {
+        errors.companyName = 'Company name must be at least 2 characters';
+      }
+      
+      if (formData.companyTin && formData.companyTin.length < 5) {
+        errors.companyTin = 'TIN must be at least 5 characters';
+      }
+    }
+
     // Password validation
     const passwordValidation = validatePasswordStrength(formData.password);
     if (!passwordValidation.isValid) {
@@ -141,17 +158,37 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
       return;
     }
 
-    const success = await register({
+    const registerData: any = {
       firstName: formData.firstName.trim(),
       lastName: formData.lastName.trim(),
       email: formData.email.toLowerCase(),
       password: formData.password,
       phone: formData.phone || undefined,
       // Role is automatically set to 'owner' on the backend
+    };
+
+    // Include company data if creating a company
+    if (formData.createCompany && formData.companyName.trim()) {
+      registerData.company = {
+        name: formData.companyName.trim(),
+        tin: formData.companyTin.trim() || undefined,
+      };
+    }
+
+    console.log('Registering with data:', {
+      ...registerData,
+      password: '***hidden***' // Don't log password
     });
 
-    if (success && onSuccess) {
-      onSuccess();
+    try {
+      const success = await register(registerData);
+
+      if (success && onSuccess) {
+        onSuccess();
+      }
+    } catch (error: any) {
+      // Error is already handled in AuthContext, but we can add additional handling here if needed
+      console.error('Registration error:', error);
     }
   };
 
@@ -268,8 +305,57 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, className }: Register
             )}
           </div>
 
-          {/* Role is automatically set to 'owner' for all registered users */}
-          {/* Users can create other roles later from the main application */}
+          {/* Company Creation Section */}
+          {formData.createCompany && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="companyName" className="text-blue-900 font-medium">
+                  Company Name <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative">
+                  <Building className="absolute left-3 top-3 h-4 w-4 text-blue-500" />
+                  <Input
+                    id="companyName"
+                    name="companyName"
+                    type="text"
+                    placeholder="Your Company Name"
+                    value={formData.companyName}
+                    onChange={handleInputChange}
+                    className={cn(
+                      'pl-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500',
+                      validationErrors.companyName && 'border-red-500 focus:border-red-500'
+                    )}
+                    disabled={isLoading}
+                  />
+                </div>
+                {validationErrors.companyName && (
+                  <p className="text-sm text-red-500">{validationErrors.companyName}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="companyTin" className="text-blue-900 font-medium">
+                  Company TIN (Optional)
+                </Label>
+                <Input
+                  id="companyTin"
+                  name="companyTin"
+                  type="text"
+                  placeholder="Tax Identification Number"
+                  value={formData.companyTin}
+                  onChange={handleInputChange}
+                  className={cn(
+                    'border-blue-200 focus:border-blue-500 focus:ring-blue-500',
+                    validationErrors.companyTin && 'border-red-500 focus:border-red-500'
+                  )}
+                  disabled={isLoading}
+                />
+                {validationErrors.companyTin && (
+                  <p className="text-sm text-red-500">{validationErrors.companyTin}</p>
+                )}
+              </div>
+            </>
+          )}
 
           {/* Password Field */}
           <div className="space-y-2">

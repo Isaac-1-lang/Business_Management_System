@@ -73,13 +73,22 @@ import { apiService } from './apiService';
 class TransactionEngine {
   private static generalLedger: GLEntry[] = [];
   
-  static async refreshGeneralLedger(params?: { startDate?: string; endDate?: string }): Promise<GLEntry[]> {
+  static async refreshGeneralLedger(params?: { startDate?: string; endDate?: string; companyId?: string }): Promise<GLEntry[]> {
     const res = await apiService.getAccountingLedger(params);
     if (res.success && res.data?.ledger) {
       // Backend returns aggregated ledger; keep for compatibility if needed
       // Here we keep a flat cache for simplicity; consumers should read from API when possible
-      return res.data.ledger as GLEntry[];
+      const ledger = res.data.ledger;
+      // Ensure we return an array
+      return Array.isArray(ledger) ? ledger as GLEntry[] : [];
     }
+    
+    // Handle specific error cases
+    if (res.error === 'COMPANY_ID_REQUIRED') {
+      console.warn('⚠️ Company ID required for ledger. User may need to create or join a company first.');
+      return [];
+    }
+    
     console.warn('Failed to fetch ledger from API:', res.error || res.message);
     return [];
   }
@@ -89,8 +98,8 @@ class TransactionEngine {
     console.warn('TransactionEngine.postTransaction is deprecated; create accounting transactions via API.');
   }
   
-  static async getGeneralLedger(): Promise<GLEntry[]> {
-    return this.refreshGeneralLedger();
+  static async getGeneralLedger(params?: { startDate?: string; endDate?: string; companyId?: string }): Promise<GLEntry[]> {
+    return this.refreshGeneralLedger(params);
   }
   
   static async getTrialBalance(asOfDate?: string): Promise<{ account_code: string; account_name: string; debit: number; credit: number; balance: number }[]> {

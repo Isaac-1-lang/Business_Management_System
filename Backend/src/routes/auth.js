@@ -65,7 +65,30 @@ const registerValidation = [
   body('companyId')
     .optional()
     .isUUID()
-    .withMessage('Invalid company ID format')
+    .withMessage('Invalid company ID format'),
+  
+  // Company creation validation
+  body('company.name')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 200 })
+    .withMessage('Company name must be between 2 and 200 characters'),
+  
+  body('company.tin')
+    .optional({ checkFalsy: true })
+    .trim()
+    .custom((value) => {
+      // If TIN is provided, it must be between 5 and 50 characters
+      // If it's empty/undefined/null, skip validation (it's optional)
+      if (!value || value.trim() === '') {
+        return true; // Skip validation for empty TIN
+      }
+      if (value.length < 5 || value.length > 50) {
+        throw new Error('TIN must be between 5 and 50 characters');
+      }
+      return true;
+    })
+    .withMessage('TIN must be between 5 and 50 characters')
 ];
 
 const loginValidation = [
@@ -106,9 +129,23 @@ const newPasswordValidation = [
  */
 router.post('/register', registerValidation, asyncHandler(async (req, res) => {
   // Check validation errors
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return errorResponse(res, 'Validation failed', 400, 'VALIDATION_ERROR', errors.array());
+  const validationErrors = validationResult(req);
+  const errorArray = validationErrors.array();
+  
+  // Additional validation: if company object is provided, name is required
+  const { company } = req.body;
+  if (company && !company.name) {
+    errorArray.push({
+      param: 'company.name',
+      msg: 'Company name is required when creating a company',
+      value: company.name
+    });
+  }
+  
+  if (errorArray.length > 0) {
+    console.log('Registration validation errors:', JSON.stringify(errorArray, null, 2));
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    return errorResponse(res, 'Validation failed', 400, 'VALIDATION_ERROR', errorArray);
   }
 
   const { firstName, lastName, email, password, phone, companyId } = req.body;
@@ -131,13 +168,39 @@ router.post('/register', registerValidation, asyncHandler(async (req, res) => {
     createdBy: req.body.createdBy || null
   });
 
-  // Associate with company if provided
-  if (companyId) {
-    const company = await Company.findByPk(companyId);
-    if (company) {
-      await user.addCompany(company, { through: { role: 'owner' } });
+  let createdCompany = null;
+
+  // Create new company if provided
+  if (company && company.name) {
+    // Clean up TIN - if it's empty or just whitespace, set to null
+    const tin = company.tin && company.tin.trim() ? company.tin.trim() : null;
+    
+    createdCompany = await Company.create({
+      name: company.name.trim(),
+      tin: tin,
+      createdBy: user.id
+    });
+    
+    // Associate user with the newly created company
+    await user.addCompany(createdCompany, { through: { role: 'owner' } });
+  }
+  // Or associate with existing company if companyId provided
+  else if (companyId) {
+    const existingCompany = await Company.findByPk(companyId);
+    if (existingCompany) {
+      await user.addCompany(existingCompany, { through: { role: 'owner' } });
+      createdCompany = existingCompany;
     }
   }
+
+  // Get user with companies for response
+  const userWithCompanies = await User.findByPk(user.id, {
+    include: [{
+      model: Company,
+      as: 'companies',
+      through: { attributes: [] }
+    }]
+  });
 
   // Generate tokens
   const accessToken = generateToken({ userId: user.id, email: user.email });
@@ -150,7 +213,8 @@ router.post('/register', registerValidation, asyncHandler(async (req, res) => {
   // await sendVerificationEmail(user.email, user.emailVerificationToken);
 
   return successResponse(res, {
-    user: user.getPublicProfile(),
+    user: userWithCompanies.getPublicProfile(),
+    companies: userWithCompanies.companies || [],
     tokens: {
       accessToken,
       refreshToken

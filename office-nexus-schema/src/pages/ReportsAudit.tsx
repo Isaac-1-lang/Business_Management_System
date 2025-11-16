@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ReportsHeader from "@/components/reports/ReportsHeader";
 import ReportMetrics from "@/components/reports/ReportMetrics";
@@ -16,9 +16,12 @@ import TaxService from "@/services/taxService";
 export default function ReportsAudit() {
   const [selectedPeriod, setSelectedPeriod] = useState("current-month");
   const [selectedRole, setSelectedRole] = useState("owner");
+  const [taxSummary, setTaxSummary] = useState<any>(null);
 
   // Get tax summary including QIT
-  const taxSummary = TaxService.getTaxSummary();
+  useEffect(() => {
+    TaxService.getTaxSummary().then(setTaxSummary).catch(console.error);
+  }, []);
 
   // Dashboard data - replace with actual data from API
   const dashboardData = {

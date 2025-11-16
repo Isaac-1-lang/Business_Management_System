@@ -21,17 +21,20 @@ export function EmployeeOverview() {
 
   const loadEmployeeData = async () => {
     try {
-      const employees = PayrollService.getAllEmployees();
+      const employees = await PayrollService.getAllEmployees();
       const currentDate = new Date();
       const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
       
-      const newHires = employees.filter(emp => 
-        new Date(emp.startDate) >= lastMonth
-      ).length;
+      const newHires = employees.filter(emp => {
+        const startDate = emp.startDate || emp.hireDate || emp.createdAt;
+        return startDate && new Date(startDate) >= lastMonth;
+      }).length;
 
-      const activeEmployees = employees.filter(emp => emp.status === 'active').length;
+      const activeEmployees = employees.filter(emp => 
+        emp.status === 'active' || emp.isActive === true
+      ).length;
       const pendingActions = employees.filter(emp => 
-        emp.status === 'inactive' || !emp.rssbNumber
+        (emp.status === 'inactive' || emp.isActive === false) || !emp.rssbNumber
       ).length;
 
       setEmployeeData({
