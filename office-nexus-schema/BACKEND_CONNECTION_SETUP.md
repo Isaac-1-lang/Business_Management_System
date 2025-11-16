@@ -1,6 +1,6 @@
 # Backend Connection Setup
 
-This guide will help you connect your frontend to the deployed backend at `https://newbiceracing.onrender.com`.
+This guide will help you connect your frontend to the deployed backend at `https://intoffice.onrender.com`.
 
 ## Quick Setup
 
@@ -18,7 +18,7 @@ node setup-backend-connection.js
 
 ```env
 # API Configuration - Connected to Deployed Backend
-VITE_API_URL=https://newbiceracing.onrender.com/api/v1
+VITE_API_URL=https://intoffice.onrender.com/api/v1
 
 # App Configuration
 VITE_APP_NAME=Office Nexus
@@ -37,7 +37,7 @@ VITE_LOG_LEVEL=debug
 
 ## What This Does
 
-- **API Endpoint**: Your frontend will now make API calls to `https://newbiceracing.onrender.com/api/v1`
+- **API Endpoint**: Your frontend will now make API calls to `https://intoffice.onrender.com/api/v1`
 - **CORS**: The backend is already configured to accept requests from your frontend
 - **Authentication**: All auth endpoints will work with the deployed backend
 - **Real-time**: WebSocket connections will work for notifications and live updates
@@ -67,7 +67,7 @@ Your deployed backend provides these main endpoints:
 ## Troubleshooting
 
 ### Connection Issues
-- Ensure the backend is running (check `https://newbiceracing.onrender.com/health`)
+- Ensure the backend is running (check `https://intoffice.onrender.com/health`)
 - Check browser console for CORS errors
 - Verify the `.env` file is in the correct location
 
@@ -93,6 +93,6 @@ Your deployed backend provides these main endpoints:
 
 If you encounter any issues:
 1. Check the browser console for error messages
-2. Verify the backend is accessible at `https://newbiceracing.onrender.com`
+2. Verify the backend is accessible at `https://intoffice.onrender.com`
 3. Check the Network tab in browser dev tools for failed requests
 4. Review the backend logs for any server-side errors

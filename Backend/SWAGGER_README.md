@@ -67,7 +67,7 @@ Use the specification with tools like:
 
 ## API Base URLs
 
-- **Production**: `https://newbiceracing.onrender.com/api/v1`
+- **Production**: `https://intoffice.onrender.com/api/v1`
 - **Development**: `http://localhost:5000/api/v1`
 
 ## Authentication
@@ -102,7 +102,7 @@ Authorization: Bearer <your-access-token>
 
 ### Register a New User
 ```bash
-curl -X POST "https://newbiceracing.onrender.com/api/v1/auth/register" \
+curl -X POST "https://intoffice.onrender.com/api/v1/auth/register" \
   -H "Content-Type: application/json" \
   -d '{
     "firstName": "John",
@@ -115,7 +115,7 @@ curl -X POST "https://newbiceracing.onrender.com/api/v1/auth/register" \
 
 ### Create a Company
 ```bash
-curl -X POST "https://newbiceracing.onrender.com/api/v1/companies" \
+curl -X POST "https://intoffice.onrender.com/api/v1/companies" \
   -H "Authorization: Bearer <your-token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -129,7 +129,7 @@ curl -X POST "https://newbiceracing.onrender.com/api/v1/companies" \
 
 ### Calculate VAT
 ```bash
-curl -X POST "https://newbiceracing.onrender.com/api/v1/tax/calculate" \
+curl -X POST "https://intoffice.onrender.com/api/v1/tax/calculate" \
   -H "Authorization: Bearer <your-token>" \
   -H "Content-Type: application/json" \
   -d '{

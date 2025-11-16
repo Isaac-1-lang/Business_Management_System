@@ -6,9 +6,9 @@ services:
     staticPublishPath: ./dist
     envVars:
       - key: VITE_API_URL
-        value: https://your-backend-service-name.onrender.com
+        value: https://intoffice.onrender.com/api/v1
       - key: VITE_WS_URL
-        value: wss://your-backend-service-name.onrender.com
+        value: wss://intoffice.onrender.com
       - key: VITE_APP_NAME
         value: Office Nexus
       - key: VITE_APP_VERSION

@@ -11,7 +11,7 @@ const path = require('path');
 console.log('🚀 Setting up frontend connection to deployed backend...\n');
 
 // Backend URL
-const BACKEND_URL = 'https://newbiceracing.onrender.com';
+const BACKEND_URL = 'https://intoffice.onrender.com';
 const API_URL = `${BACKEND_URL}/api/v1`;
 
 // Create .env file
