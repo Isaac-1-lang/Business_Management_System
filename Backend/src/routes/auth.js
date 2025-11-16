@@ -75,20 +75,29 @@ const registerValidation = [
     .withMessage('Company name must be between 2 and 200 characters'),
   
   body('company.tin')
-    .optional({ checkFalsy: true })
-    .trim()
+    .optional({ checkFalsy: true, nullable: true })
     .custom((value) => {
-      // If TIN is provided, it must be between 5 and 50 characters
-      // If it's empty/undefined/null, skip validation (it's optional)
-      if (!value || value.trim() === '') {
-        return true; // Skip validation for empty TIN
+      // If TIN is not provided or is empty, skip validation (it's optional)
+      if (!value || value === null || value === undefined) {
+        return true; // Skip validation for empty/missing TIN
       }
-      if (value.length < 5 || value.length > 50) {
+      
+      // Convert to string and trim
+      const trimmed = String(value).trim();
+      
+      // If empty after trimming, skip validation
+      if (trimmed === '') {
+        return true;
+      }
+      
+      // If TIN is provided, it must be between 5 and 50 characters
+      if (trimmed.length < 5 || trimmed.length > 50) {
         throw new Error('TIN must be between 5 and 50 characters');
       }
+      
       return true;
     })
-    .withMessage('TIN must be between 5 and 50 characters')
+    .withMessage('TIN must be between 5 and 50 characters if provided')
 ];
 
 const loginValidation = [
@@ -145,7 +154,17 @@ router.post('/register', registerValidation, asyncHandler(async (req, res) => {
   if (errorArray.length > 0) {
     console.log('Registration validation errors:', JSON.stringify(errorArray, null, 2));
     console.log('Request body:', JSON.stringify(req.body, null, 2));
-    return errorResponse(res, 'Validation failed', 400, 'VALIDATION_ERROR', errorArray);
+    console.log('Company object:', JSON.stringify(req.body.company, null, 2));
+    console.log('TIN value:', req.body.company?.tin, 'Type:', typeof req.body.company?.tin, 'Length:', req.body.company?.tin?.length);
+    
+    // Format error message for better readability
+    const errorMessages = errorArray.map(err => {
+      const field = err.param || err.msg;
+      const message = err.msg || 'Validation failed';
+      return `${field}: ${message}`;
+    }).join('; ');
+    
+    return errorResponse(res, `Validation failed: ${errorMessages}`, 400, 'VALIDATION_ERROR', errorArray);
   }
 
   const { firstName, lastName, email, password, phone, companyId } = req.body;

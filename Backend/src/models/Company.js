@@ -102,12 +102,18 @@ Company.init({
   
   // Tax Information (Rwanda)
   tin: {
-    type: DataTypes.STRING(20),
+    type: DataTypes.STRING(50),
     allowNull: true,
     unique: true,
     validate: {
-      len: [9, 20],
-      is: /^[0-9]+$/ // Only numbers
+      len: {
+        args: [5, 50],
+        msg: 'TIN must be between 5 and 50 characters'
+      },
+      is: {
+        args: /^[0-9]+$/,
+        msg: 'TIN must contain only numbers'
+      }
     },
     field: 'tin'
   },
