@@ -92,16 +92,37 @@ const requestHandler = async (req,res)=> {
   res.writeHead(200,{'Content-Type':'text/html'})
   res.end(version);
 }
+// Socket.io CORS configuration - needs string origins only (no regex)
+const socketOrigins = [
+  process.env.FRONTEND_URL || "http://localhost:5173",
+  "http://localhost:8080",
+  "http://localhost:3000",
+  "http://localhost:5174",
+  "https://business-management-system-5c4g.vercel.app",
+  "https://business-management-system-em23.vercel.app"
+];
+
 const io = new Server(server, {
   cors: {
-    origin: [
-      process.env.FRONTEND_URL || "http://localhost:5173",
-      "http://localhost:8080",
-      "http://localhost:3000",
-      "http://localhost:5174"
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true
+    origin: function (origin, callback) {
+      // Allow requests with no origin
+      if (!origin) return callback(null, true);
+      
+      // Check if origin matches any allowed origin or matches patterns
+      const isAllowed = socketOrigins.includes(origin) ||
+        /^https:\/\/.*\.vercel\.app$/.test(origin) ||
+        /^https:\/\/.*\.onrender\.com$/.test(origin) ||
+        /^https:\/\/.*\.render\.com$/.test(origin);
+      
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
   }
 });
 
@@ -130,15 +151,19 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5174",
   "https://business-management-system-em23.vercel.app",
-  /^https:\/\/.*\.vercel\.app$/,
-  /^https:\/\/.*\.onrender\.com$/,
-  /^https:\/\/.*\.render\.com$/,
+  "https://business-management-system-5c4g.vercel.app", // Explicitly add the Vercel domain
+  /^https:\/\/.*\.vercel\.app$/, // Regex pattern for all Vercel apps
+  /^https:\/\/.*\.onrender\.com$/, // Regex pattern for Render apps
+  /^https:\/\/.*\.render\.com$/, // Regex pattern for Render apps
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like Postman, curl)
-    if (!origin) return callback(null, true);
+    // Allow requests with no origin (like Postman, curl, mobile apps)
+    if (!origin) {
+      console.log('✅ Allowing request with no origin (Postman/curl/mobile)');
+      return callback(null, true);
+    }
 
     // Check if origin is in the list
     const isAllowed = allowedOrigins.some(allowed => {
@@ -151,15 +176,21 @@ app.use(cors({
     });
 
     if (isAllowed) {
+      console.log(`✅ CORS allowed request from: ${origin}`);
       callback(null, true);
     } else {
       console.warn(`❌ CORS blocked request from: ${origin}`);
+      console.log('Allowed origins:', allowedOrigins.map(o => typeof o === 'string' ? o : o.toString()));
       callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+  exposedHeaders: ["Content-Range", "X-Content-Range"],
+  maxAge: 86400, // 24 hours - cache preflight requests
+  preflightContinue: false,
+  optionsSuccessStatus: 200
 }));
 
 // Rate limiting - more lenient in development
